@@ -24,6 +24,11 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::keyPressEvent(QKeyEvent *event)
+{
+    ui->openGLWidget->keyPressEvent(event);
+}
+
 void MainWindow::save()
 {
 

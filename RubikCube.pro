@@ -28,13 +28,16 @@ SOURCES += \
         main.cpp \
         mainwindow.cpp \
     rubikscubeview.cpp \
-    rubikscube.cpp
+    rubikscube.cpp \
+    cube.cpp
 
 HEADERS += \
         mainwindow.h \
     rubikscubeview.h \
     rubikscube.h \
-    constants.h
+    constants.h \
+    vertex.h \
+    cube.h
 
 FORMS += \
         mainwindow.ui
@@ -43,3 +46,8 @@ FORMS += \
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+RESOURCES += \
+    resources.qrc
+
+DISTFILES +=
