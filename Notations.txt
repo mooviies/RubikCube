@@ -1,0 +1,41 @@
+See unfolded cube diagram
+
+Clockwise/Anticlockwise : See Unfolded2
+
+Up : White
+Left : Orange
+Front : Green
+Right : Red
+Back : Blue
+Down : Yellow
+
+U : Up
+L : Left
+F : Front
+R : Right
+B : Back
+D : Down
+
+M : Middle   : Layer between L and R, turn direction as L
+E : Equator  : Layer between U and D, turn direction as D
+S : Standing : Layer between F and B, turn direction as F
+
+x : Entire cube on R
+y : Entire cube on U
+z : Entier cube on F
+
+U   : Turn top layer clockwise 
+U'  : Turn top layer antiClockwise
+U2  : Turn top layer 180º
+
+Uu  : Turn top 2 layers clockwise
+Uu' : Turn top 2 layers anticlockwise
+Uu2 : Turn top 2 layers 180º
+
+#U  : Turn layer # from top clockwise
+#U' : Turn layer # from top anticlockwise
+#U2 : Turn layer # from top 180º
+
+#Uw  : Turn top # layers clockwise
+#Uw' : Turn top # layers anticlockwise
+#Uw2 : Turn top # layers 180º

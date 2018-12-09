@@ -26,10 +26,15 @@ CONFIG += c++11
 
 SOURCES += \
         main.cpp \
-        mainwindow.cpp
+        mainwindow.cpp \
+    rubikscubeview.cpp \
+    rubikscube.cpp
 
 HEADERS += \
-        mainwindow.h
+        mainwindow.h \
+    rubikscubeview.h \
+    rubikscube.h \
+    constants.h
 
 FORMS += \
         mainwindow.ui

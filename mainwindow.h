@@ -15,6 +15,16 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+private slots:
+    void save();
+    void load();
+    void reset();
+
+    void execute();
+
+    void scramble();
+    void solve();
+
 private:
     Ui::MainWindow *ui;
 };
