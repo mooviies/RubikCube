@@ -4,17 +4,19 @@
 #include "vertex.h"
 #include "constants.h"
 
-static const float SQUARE_VERTICES_COUNT = 4;
-static const float CUBE_VERTICES_COUNT = SQUARE_VERTICES_COUNT * 6;
+static const int SQUARE_VERTICES_COUNT = 4;
+static const int CUBE_VERTICES_COUNT = SQUARE_VERTICES_COUNT * 6;
 
 class Cube
 {
 public:
+    Cube();
     Cube(QVector3D position, float size);
 
     void setPosition(const QVector3D& position);
     void setSize(float size);
     void setColor(Face face, Color color);
+    void setID(int id);
 
     void generate();
 
@@ -28,7 +30,7 @@ private:
     Vertex _vertices[24];
     Vertex _verticesByFace[6][4];
     Color _colors[6];
-    bool _showFace();
+    int _id;
 };
 
 #endif // CUBE_H

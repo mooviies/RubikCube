@@ -7,7 +7,7 @@ Cube::Cube() : _size(0)
 
 }
 
-Cube::Cube(QVector3D position, float size) : _position(position), _size(size)
+Cube::Cube(QVector3D position, float size) : _position(position), _size(size), _id(0)
 {
 
 }
@@ -47,45 +47,50 @@ void Cube::setColor(Face face, Color color)
     }
 }
 
+void Cube::setID(int id)
+{
+    _id = id;
+}
+
 void Cube::generate()
 {
     float hsize = _size / 2.0;
 
     // Front
-    _vertices[0] = Vertex(QVector3D(-hsize,  -hsize, hsize) + _position, QVector2D(0, 0), _colors[0], 0.015f);
-    _vertices[1] = Vertex(QVector3D(hsize,  -hsize, hsize) + _position, QVector2D(1, 0), _colors[0], 0.015f);
-    _vertices[2] = Vertex(QVector3D(hsize,  hsize, hsize) + _position, QVector2D(1, 1), _colors[0], 0.015f);
-    _vertices[3] = Vertex(QVector3D(-hsize,  hsize, hsize) + _position, QVector2D(0, 1), _colors[0], 0.015f);
+    _vertices[0] = Vertex(QVector3D(-hsize,  -hsize, hsize) + _position, QVector2D(0, 0), _colors[0], _id);
+    _vertices[1] = Vertex(QVector3D(hsize,  -hsize, hsize) + _position, QVector2D(1, 0), _colors[0], _id);
+    _vertices[2] = Vertex(QVector3D(hsize,  hsize, hsize) + _position, QVector2D(1, 1), _colors[0], _id);
+    _vertices[3] = Vertex(QVector3D(-hsize,  hsize, hsize) + _position, QVector2D(0, 1), _colors[0], _id);
 
     // Back
-    _vertices[4] = Vertex(QVector3D(hsize,  -hsize, -hsize) + _position, QVector2D(0, 0), _colors[1], 0.015f);
-    _vertices[5] = Vertex(QVector3D(-hsize,  -hsize, -hsize) + _position, QVector2D(1, 0), _colors[1], 0.015f);
-    _vertices[6] = Vertex(QVector3D(-hsize,  hsize, -hsize) + _position, QVector2D(1, 1), _colors[1], 0.015f);
-    _vertices[7] = Vertex(QVector3D(hsize,  hsize, -hsize) + _position, QVector2D(0, 1), _colors[1], 0.015f);
+    _vertices[4] = Vertex(QVector3D(hsize,  -hsize, -hsize) + _position, QVector2D(0, 0), _colors[1], _id);
+    _vertices[5] = Vertex(QVector3D(-hsize,  -hsize, -hsize) + _position, QVector2D(1, 0), _colors[1], _id);
+    _vertices[6] = Vertex(QVector3D(-hsize,  hsize, -hsize) + _position, QVector2D(1, 1), _colors[1], _id);
+    _vertices[7] = Vertex(QVector3D(hsize,  hsize, -hsize) + _position, QVector2D(0, 1), _colors[1], _id);
 
     // Left
-    _vertices[8] = Vertex(QVector3D(-hsize,  -hsize, -hsize) + _position, QVector2D(0, 0), _colors[2], 0.015f);
-    _vertices[9] = Vertex(QVector3D(-hsize,  -hsize, hsize) + _position, QVector2D(1, 0), _colors[2], 0.015f);
-    _vertices[10] = Vertex(QVector3D(-hsize,  hsize, hsize) + _position, QVector2D(1, 1), _colors[2], 0.015f);
-    _vertices[11] = Vertex(QVector3D(-hsize,  hsize, -hsize) + _position, QVector2D(0, 1), _colors[2], 0.015f);
+    _vertices[8] = Vertex(QVector3D(-hsize,  -hsize, -hsize) + _position, QVector2D(0, 0), _colors[2], _id);
+    _vertices[9] = Vertex(QVector3D(-hsize,  -hsize, hsize) + _position, QVector2D(1, 0), _colors[2], _id);
+    _vertices[10] = Vertex(QVector3D(-hsize,  hsize, hsize) + _position, QVector2D(1, 1), _colors[2], _id);
+    _vertices[11] = Vertex(QVector3D(-hsize,  hsize, -hsize) + _position, QVector2D(0, 1), _colors[2], _id);
 
     // Right
-    _vertices[12] = Vertex(QVector3D(hsize,  -hsize, hsize) + _position, QVector2D(0, 0), _colors[3], 0.015f);
-    _vertices[13] = Vertex(QVector3D(hsize,  -hsize, -hsize) + _position, QVector2D(1, 0), _colors[3], 0.015f);
-    _vertices[14] = Vertex(QVector3D(hsize,  hsize, -hsize) + _position, QVector2D(1, 1), _colors[3], 0.015f);
-    _vertices[15] = Vertex(QVector3D(hsize,  hsize, hsize) + _position, QVector2D(0, 1), _colors[3], 0.015f);
+    _vertices[12] = Vertex(QVector3D(hsize,  -hsize, hsize) + _position, QVector2D(0, 0), _colors[3], _id);
+    _vertices[13] = Vertex(QVector3D(hsize,  -hsize, -hsize) + _position, QVector2D(1, 0), _colors[3], _id);
+    _vertices[14] = Vertex(QVector3D(hsize,  hsize, -hsize) + _position, QVector2D(1, 1), _colors[3], _id);
+    _vertices[15] = Vertex(QVector3D(hsize,  hsize, hsize) + _position, QVector2D(0, 1), _colors[3], _id);
 
     // Up
-    _vertices[16] = Vertex(QVector3D(-hsize,  hsize, hsize) + _position, QVector2D(0, 0), _colors[4], 0.015f);
-    _vertices[17] = Vertex(QVector3D(hsize,  hsize, hsize) + _position, QVector2D(1, 0), _colors[4], 0.015f);
-    _vertices[18] = Vertex(QVector3D(hsize,  hsize, -hsize) + _position, QVector2D(1, 1), _colors[4], 0.015f);
-    _vertices[19] = Vertex(QVector3D(-hsize,  hsize, -hsize) + _position, QVector2D(0, 1), _colors[4], 0.015f);
+    _vertices[16] = Vertex(QVector3D(-hsize,  hsize, hsize) + _position, QVector2D(0, 0), _colors[4], _id);
+    _vertices[17] = Vertex(QVector3D(hsize,  hsize, hsize) + _position, QVector2D(1, 0), _colors[4], _id);
+    _vertices[18] = Vertex(QVector3D(hsize,  hsize, -hsize) + _position, QVector2D(1, 1), _colors[4], _id);
+    _vertices[19] = Vertex(QVector3D(-hsize,  hsize, -hsize) + _position, QVector2D(0, 1), _colors[4], _id);
 
     // Down
-    _vertices[20] = Vertex(QVector3D(-hsize,  -hsize, hsize) + _position, QVector2D(0, 0), _colors[5], 0.015f);
-    _vertices[21] = Vertex(QVector3D(hsize,  -hsize, hsize) + _position, QVector2D(1, 0), _colors[5], 0.015f);
-    _vertices[22] = Vertex(QVector3D(hsize,  -hsize, -hsize) + _position, QVector2D(1, 1), _colors[5], 0.015f);
-    _vertices[23] = Vertex(QVector3D(-hsize,  -hsize, -hsize) + _position, QVector2D(0, 1), _colors[5], 0.015f);
+    _vertices[20] = Vertex(QVector3D(-hsize,  -hsize, hsize) + _position, QVector2D(0, 0), _colors[5], _id);
+    _vertices[21] = Vertex(QVector3D(hsize,  -hsize, hsize) + _position, QVector2D(1, 0), _colors[5], _id);
+    _vertices[22] = Vertex(QVector3D(hsize,  -hsize, -hsize) + _position, QVector2D(1, 1), _colors[5], _id);
+    _vertices[23] = Vertex(QVector3D(-hsize,  -hsize, -hsize) + _position, QVector2D(0, 1), _colors[5], _id);
 
     for(int i = 0; i < CUBE_VERTICES_COUNT; i++)
     {

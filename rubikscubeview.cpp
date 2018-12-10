@@ -7,8 +7,6 @@
 #include "constants.h"
 #include "cube.h"
 
-static const Cube cubeData(1, Color::Green, Color::Blue, Color::Orange, Color::Red, Color::White, Color::Yellow);
-
 RubiksCubeView::RubiksCubeView(QWidget *parent) : QOpenGLWidget(parent)
 {
     _cube = nullptr;
@@ -61,7 +59,7 @@ void RubiksCubeView::initializeGL()
     f->glClearDepthf(2000.0f);
 
     _camera.setToIdentity();
-    _camera.translate(0, 0, -4);
+    _camera.translate(0, 0, -float(_cube->width()) * (3));
     _camera.rotate(45, 0, 1, 0);
     _camera.rotate(25, 1, 0, 1);
 
@@ -76,7 +74,7 @@ void RubiksCubeView::initializeGL()
     _buffer.create();
     _buffer.bind();
     _buffer.setUsagePattern(QOpenGLBuffer::StaticDraw);
-    _buffer.allocate(cubeData.vertices(), cubeData.verticesSize());
+    _buffer.allocate(_cube->vertices(), _cube->getSizeOfVertices());
     // Create Vertex Array Object
     _vao.create();
     _vao.bind();
@@ -87,7 +85,7 @@ void RubiksCubeView::initializeGL()
     _shaderProgram->setAttributeBuffer(0, GL_FLOAT, Vertex::positionOffset(), Vertex::PositionTupleSize, Vertex::stride());
     _shaderProgram->setAttributeBuffer(1, GL_FLOAT, Vertex::uvOffset(), Vertex::UVTupleSize, Vertex::stride());
     _shaderProgram->setAttributeBuffer(2, GL_FLOAT, Vertex::colorOffset(), Vertex::ColorTupleSize, Vertex::stride());
-    _shaderProgram->setAttributeBuffer(3, GL_FLOAT, Vertex::borderWidthOffset(), Vertex::BorderTupleSize, Vertex::stride());
+    _shaderProgram->setAttributeBuffer(3, GL_INT, Vertex::idOffset(), Vertex::IDTupleSize, Vertex::stride());
 
     // Release (unbind) all
     _vao.release();
@@ -104,7 +102,7 @@ void RubiksCubeView::resizeGL(int w, int h)
 {
     _aspectRatio = w / float(h);
     _projection.setToIdentity();
-    _projection.perspective(45.0f, _aspectRatio, 0.01f, 10.0f);
+    _projection.perspective(45.0f, _aspectRatio, 0.01f, 100.0f);
 }
 
 void RubiksCubeView::paintGL()
@@ -121,7 +119,8 @@ void RubiksCubeView::paintGL()
 
     _shaderProgram->setUniformValue(_projectionMatrixID, _projection);
     _shaderProgram->setUniformValue(_cameraMatrixID, _camera);
-    f->glDrawArrays(GL_QUADS, 0, cubeData.verticesSize() / sizeof(cubeData.vertices()[0]));
+    _shaderProgram->setUniformValue(_borderWidthID, 0.015f);
+    f->glDrawArrays(GL_QUADS, 0, _cube->getSizeOfVertices() / sizeof(_cube->vertices()[0]));
     _vao.release();
     }
     _shaderProgram->release();
