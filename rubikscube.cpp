@@ -30,17 +30,16 @@ void RubiksCube::init()
         _alternateFace.insert((Face)i, (Face)i);
 
     _colorByFace.clear();
-    _colorByFace[Face::Back] = Color::Blue;
-    _colorByFace[Face::Front] = Color::Green;
-    _colorByFace[Face::Left] = Color::Orange;
-    _colorByFace[Face::Right] = Color::Red;
-    _colorByFace[Face::Up] = Color::White;
-    _colorByFace[Face::Down] = Color::Yellow;
+    _colorByFace.append(Color::Orange);
+    _colorByFace.append(Color::Green);
+    _colorByFace.append(Color::Red);
+    _colorByFace.append(Color::Blue);
+    _colorByFace.append(Color::White);
+    _colorByFace.append(Color::Yellow);
 
     _currentRotation = 0;
     _targetRotation = 0;
-    _global.setToIdentity();
-    _local.setToIdentity();
+    _layerRotation.setToIdentity();
     _isAnimating = false;
     _sizeOfVertices = 0;
     _shaderProgram = new QOpenGLShaderProgram();
@@ -73,6 +72,9 @@ bool RubiksCube::rotate(Layer layer, Rotation rotation, int layerPos, bool wide)
     if(layerPos <= 0 || layerPos > _size / 2)
         return false;
 
+    Face rotationFace = Face::Up;
+    _rotating.clear();
+
     _buffer.bind();
 
     if(layer & centerLayers)
@@ -81,20 +83,21 @@ bool RubiksCube::rotate(Layer layer, Rotation rotation, int layerPos, bool wide)
         switch(layer)
         {
         case Layer::Equator:
-            rotateLayer(Face::Down, cl, rotation);
+            rotationFace = Face::Down;
             break;
         case Layer::Horizontal:
-            rotateLayer(Face::Up, cl, rotation);
+            rotationFace = Face::Up;
             break;
         case Layer::Middle:
-            rotateLayer(Face::Left, cl, rotation);
+            rotationFace = Face::Left;
             break;
         case Layer::Standing:
-            rotateLayer(Face::Front, cl, rotation);
+            rotationFace = Face::Front;
             break;
         default:
             break;
         }
+        rotateLayer(rotationFace, cl, rotation);
     }
     else
     {
@@ -102,14 +105,15 @@ bool RubiksCube::rotate(Layer layer, Rotation rotation, int layerPos, bool wide)
         {
             if(layer & 1 << i)
             {
+                rotationFace = (Face)i;
                 if((wide || layerPos == 1))
                 {
-                    rotateFace((Face)i, rotation);
+                    rotateFace(rotationFace, rotation);
                 }
 
                 for(int j = wide ? 1: layerPos; j <= layerPos; j++)
                 {
-                    rotateLayer((Face)i, j, rotation);
+                    rotateLayer(rotationFace, j, rotation);
                 }
                 break;
             }
@@ -117,6 +121,45 @@ bool RubiksCube::rotate(Layer layer, Rotation rotation, int layerPos, bool wide)
     }
 
     _buffer.release();
+
+    switch(rotationFace)
+    {
+    case Face::Back:
+        _rotationVector = QVector3D(0, 0, 1);
+        break;
+    case Face::Front:
+        _rotationVector = QVector3D(0, 0, -1);
+        break;
+    case Face::Left:
+        _rotationVector = QVector3D(1, 0, 0);
+        break;
+    case Face::Right:
+        _rotationVector = QVector3D(-1, 0, 0);
+        break;
+    case Face::Up:
+        _rotationVector = QVector3D(0, -1, 0);
+        break;
+    case Face::Down:
+        _rotationVector = QVector3D(0, 1, 0);
+        break;
+    }
+
+    switch(rotation)
+    {
+    case Rotation::Clockwise:
+        _targetRotation = 90;
+        break;
+    case Rotation::CounterClockwise:
+        _targetRotation = 90;
+        _rotationVector *= -1;
+        break;
+    case Rotation::Turn180:
+        _targetRotation = 180;
+        break;
+    }
+
+    _currentRotation = 0;
+    _isAnimating = true;
 
     return true;
 }
@@ -152,10 +195,13 @@ void RubiksCube::rotateFace(Face faceID, Rotation rotation)
                 face[i][j] = buffer[_size - i - 1][_size - j - 1];
                 break;
             }
-            setColor(faceID, i, j, _colorByFace[face[i][j]]);
+            int test = (int)face[i][j];
+            setColor(faceID, i, j, _colorByFace[test]);
         }
-        delete[] buffer[i];
     }
+
+    for(int i = 0; i < _size; i++)
+        delete[] buffer[i];
     delete[] buffer;
 }
 
@@ -199,10 +245,10 @@ void RubiksCube::rotateLayer(Face faceID, int layer, Rotation rotation)
                 left[i][j] = right[i][j];
                 right[i][j] = buffer2;
             }
-            setColor(Face::Front, i, j, _colorByFace[front[i][j]]);
-            setColor(Face::Right, i, j, _colorByFace[right[i][j]]);
-            setColor(Face::Back, i, j, _colorByFace[back[i][j]]);
-            setColor(Face::Left, i, j, _colorByFace[left[i][j]]);
+            setColor(Face::Front, i, j, _colorByFace[(int)front[i][j]]);
+            setColor(Face::Right, i, j, _colorByFace[(int)right[i][j]]);
+            setColor(Face::Back, i, j, _colorByFace[(int)back[i][j]]);
+            setColor(Face::Left, i, j, _colorByFace[(int)left[i][j]]);
         }
 
         return;
@@ -245,10 +291,10 @@ void RubiksCube::rotateLayer(Face faceID, int layer, Rotation rotation)
                 back[_size - i - 1][_size - j - 1] = front[i][j];
                 front[i][j] = buffer2;
             }
-            setColor(Face::Front, i, j, _colorByFace[front[i][j]]);
-            setColor(Face::Up, i, j, _colorByFace[up[i][j]]);
-            setColor(Face::Back, _size - i - 1, _size - j - 1, _colorByFace[back[_size - i - 1][_size - j - 1]]);
-            setColor(Face::Down, i, j, _colorByFace[down[i][j]]);
+            setColor(Face::Front, i, j, _colorByFace[(int)front[i][j]]);
+            setColor(Face::Up, i, j, _colorByFace[(int)up[i][j]]);
+            setColor(Face::Back, _size - i - 1, _size - j - 1, _colorByFace[(int)back[_size - i - 1][_size - j - 1]]);
+            setColor(Face::Down, i, j, _colorByFace[(int)down[i][j]]);
         }
         return;
     }
@@ -290,23 +336,49 @@ void RubiksCube::rotateLayer(Face faceID, int layer, Rotation rotation)
                 left[_size - i - 1][_size - j - 1] = right[i][j];
                 right[i][j] = buffer2;
             }
-            setColor(Face::Up, _size - j - 1, i, _colorByFace[up[_size - j - 1][i]]);
-            setColor(Face::Left, _size - i - 1, _size - j - 1, _colorByFace[left[_size - i - 1][_size - j - 1]]);
-            setColor(Face::Down, j, _size - i - 1, _colorByFace[down[j][_size - i - 1]]);
-            setColor(Face::Right, i, j, _colorByFace[right[i][j]]);
+            setColor(Face::Up, _size - j - 1, i, _colorByFace[(int)up[_size - j - 1][i]]);
+            setColor(Face::Left, _size - i - 1, _size - j - 1, _colorByFace[(int)left[_size - i - 1][_size - j - 1]]);
+            setColor(Face::Down, j, _size - i - 1, _colorByFace[(int)down[j][_size - i - 1]]);
+            setColor(Face::Right, i, j, _colorByFace[(int)right[i][j]]);
         }
         return;
     }
 }
 
+void RubiksCube::completeRotation()
+{
+    _buffer.bind();
+    foreach(int key, _rotating.keys())
+    {
+        setColor(key, _rotating[key]);
+    }
+    _buffer.release();
+    _isAnimating = false;
+    _rotating.clear();
+}
+
 void RubiksCube::display(QOpenGLFunctions *f, const QMatrix4x4 &projection, const QMatrix4x4 &camera)
 {
+    if(_isAnimating)
+    {
+        _currentRotation += ROTATION_SPEED;
+        if(_currentRotation >= _targetRotation)
+        {
+            completeRotation();
+        }
+        else
+        {
+            _layerRotation.setToIdentity();
+            _layerRotation.rotate(_currentRotation, _rotationVector);
+        }
+    }
+
     _shaderProgram->bind();
     _vao.bind();
 
     _shaderProgram->setUniformValue(_projectionMatrixID, projection);
     _shaderProgram->setUniformValue(_cameraMatrixID, camera);
-    _shaderProgram->setUniformValue(_rotationMatrixID, _global);
+    _shaderProgram->setUniformValue(_rotationMatrixID, _layerRotation);
     _shaderProgram->setUniformValue(_borderWidthMatrixID, 0.015f);
 
     f->glDrawArrays(GL_QUADS, 0, _sizeOfVertices / sizeof(_vertices[0]));
@@ -339,7 +411,7 @@ void RubiksCube::createModel()
     for(int i = 0; i < NUMBER_SIDE; i++)
     {
         Face face = (Face)(i);
-        cube.setColor(face, _colorByFace[face]);
+        cube.setColor(face, _colorByFace[(int)face]);
 
         float x, y, z;
         float xi = 0, yi = 0, zi = 0;
@@ -436,10 +508,10 @@ void RubiksCube::buildBuffer()
     _shaderProgram->enableAttributeArray(1);
     _shaderProgram->enableAttributeArray(2);
     _shaderProgram->enableAttributeArray(3);
-    _shaderProgram->setAttributeBuffer(0, GL_FLOAT, Vertex::positionOffset(), Vertex::PositionTupleSize, Vertex::stride());
-    _shaderProgram->setAttributeBuffer(1, GL_FLOAT, Vertex::uvOffset(), Vertex::UVTupleSize, Vertex::stride());
-    _shaderProgram->setAttributeBuffer(2, GL_FLOAT, Vertex::colorOffset(), Vertex::ColorTupleSize, Vertex::stride());
-    _shaderProgram->setAttributeBuffer(3, GL_INT, Vertex::idOffset(), Vertex::IDTupleSize, Vertex::stride());
+    _shaderProgram->setAttributeBuffer(0, GL_FLOAT, Vertex::positionOffset(), Vertex::POSITION_TUPLE_SIZE, Vertex::stride());
+    _shaderProgram->setAttributeBuffer(1, GL_FLOAT, Vertex::uvOffset(), Vertex::UV_TUPLE_SIZE, Vertex::stride());
+    _shaderProgram->setAttributeBuffer(2, GL_FLOAT, Vertex::colorOffset(), Vertex::COLOR_TUPLE_SIZE, Vertex::stride());
+    _shaderProgram->setAttributeBuffer(3, GL_FLOAT, Vertex::rotatingOffset(), Vertex::ROTATING_TUPLE_SIZE, Vertex::stride());
 
     // Release (unbind) all
     _vao.release();
@@ -465,21 +537,34 @@ void RubiksCube::clean()
     _shaderProgram = nullptr;
 }
 
-void RubiksCube::setColor(Face face, int i, int j, Color color)
+void RubiksCube::setColor(int offset, Color color)
 {
     QColor c(color);
     QVector3D cv(c.redF(), c.greenF(), c.blueF());
-    int count = sizeof(cv);
+    int tb = 0;
 
+    int sizeofQVecto3D = sizeof(cv);
+    int sizeOfInt = sizeof(tb);
+
+    for(int i = 0; i < SQUARE_VERTICES_COUNT; i++)
+    {
+        _buffer.write(offset + Vertex::colorOffset(), &cv, sizeofQVecto3D);
+        _buffer.write(offset + Vertex::rotatingOffset(), &tb, sizeOfInt);
+        offset += Vertex::stride();
+    }
+}
+
+void RubiksCube::setColor(Face face, int i, int j, Color color)
+{
     int baseOffset = Vertex::stride() * getID((int)face, i, j) * SQUARE_VERTICES_COUNT;
-    _buffer.write(baseOffset + Vertex::colorOffset(), &cv, count);
-    baseOffset += Vertex::stride();
+    int tb = 1;
+    int sizeOfInt = sizeof(tb);
 
-    _buffer.write(baseOffset + Vertex::colorOffset(), &cv, count);
-    baseOffset += Vertex::stride();
+    _rotating.insert(baseOffset, color);
 
-    _buffer.write(baseOffset + Vertex::colorOffset(), &cv, count);
-    baseOffset += Vertex::stride();
-
-    _buffer.write(baseOffset + Vertex::colorOffset(), &cv, count);
+    for(int i = 0; i < SQUARE_VERTICES_COUNT; i++)
+    {
+        _buffer.write(baseOffset + Vertex::rotatingOffset(), &tb, sizeOfInt);
+        baseOffset += Vertex::stride();
+    }
 }

@@ -6,6 +6,7 @@
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLFunctions>
 #include <QMap>
+#include <QVector3D>
 #include <cmath>
 
 #include "constants.h"
@@ -31,6 +32,7 @@ public:
 protected:
     void rotateFace(Face faceID, Rotation rotation);
     void rotateLayer(Face faceID, int layer, Rotation rotation);
+    void completeRotation();
 
 private:
     void create();
@@ -40,6 +42,7 @@ private:
 
     inline static float getWidth(float size) { return 1.6f * log(size) - 0.7f; }
 
+    void setColor(int offset, Color color);
     void setColor(Face face, int i, int j, Color color);
 
 private:
@@ -55,7 +58,7 @@ private:
     int _sizeOfVertices;
 
     QMap<Face, Face> _alternateFace;
-    QMap<Face, Color> _colorByFace;
+    QList<Color> _colorByFace;
 
     QOpenGLShaderProgram *_shaderProgram;
     QOpenGLBuffer _buffer;
@@ -64,8 +67,9 @@ private:
     float _currentRotation;
     float _targetRotation;
 
-    QMatrix4x4 _global;
-    QMatrix4x4 _local;
+    QVector3D _rotationVector;
+    QMatrix4x4 _layerRotation;
+    QMap<int, Color> _rotating;
 
     int _projectionMatrixID;
     int _cameraMatrixID;

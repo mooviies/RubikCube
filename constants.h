@@ -85,4 +85,6 @@ const float CUBE_HSIZE = CUBE_SIZE / 2.0f;
 const int MIN_SIZE = 1;
 const int MAX_SIZE = 100;
 
+const float ROTATION_SPEED = 6;
+
 #endif // CONSTANTS_H
