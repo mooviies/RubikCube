@@ -87,8 +87,10 @@ bool RubiksCube::rotate(Layer layer, Rotation rotation, int layerPos, bool wide)
             rotateLayer(Face::Up, cl, rotation);
             break;
         case Layer::Middle:
+            rotateLayer(Face::Left, cl, rotation);
             break;
         case Layer::Standing:
+            rotateLayer(Face::Front, cl, rotation);
             break;
         default:
             break;
