@@ -17,7 +17,7 @@ RubiksCubeView::~RubiksCubeView()
     clean();
 }
 
-void RubiksCubeView::setCube(const RubiksCube* cube)
+void RubiksCubeView::setCube(RubiksCube *cube)
 {
     _cube = cube;
 }
@@ -38,6 +38,18 @@ void RubiksCubeView::keyPressEvent(QKeyEvent *event)
     case Qt::Key_S:
         _camera.rotate(-5, 1, 0, 0);
         break;
+    case Qt::Key_E:
+        _cube->rotate(Layer::Up, Rotation::Clockwise);
+        break;
+    case Qt::Key_R:
+        _cube->rotate(Layer::Up, Rotation::Clockwise);
+        break;
+    case Qt::Key_T:
+        _cube->rotate(Layer::Left, Rotation::Clockwise);
+        break;
+    case Qt::Key_Y:
+        _cube->rotate(Layer::Right, Rotation::Clockwise);
+        break;
     }
 }
 
@@ -57,45 +69,6 @@ void RubiksCubeView::initializeGL()
 
     f->glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     f->glClearDepthf(2000.0f);
-
-    _camera.setToIdentity();
-    _camera.translate(0, 0, -float(_cube->width()) * (3));
-    _camera.rotate(45, 0, 1, 0);
-    _camera.rotate(25, 1, 0, 1);
-
-    // Create Shader (Do not release until VAO is created)
-    _shaderProgram = new QOpenGLShaderProgram();
-    _shaderProgram->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/simple.vert");
-    _shaderProgram->addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/simple.frag");
-    _shaderProgram->link();
-    _shaderProgram->bind();
-
-    // Create Buffer (Do not release until VAO is created)
-    _buffer.create();
-    _buffer.bind();
-    _buffer.setUsagePattern(QOpenGLBuffer::StaticDraw);
-    _buffer.allocate(_cube->vertices(), _cube->getSizeOfVertices());
-    // Create Vertex Array Object
-    _vao.create();
-    _vao.bind();
-    _shaderProgram->enableAttributeArray(0);
-    _shaderProgram->enableAttributeArray(1);
-    _shaderProgram->enableAttributeArray(2);
-    _shaderProgram->enableAttributeArray(3);
-    _shaderProgram->setAttributeBuffer(0, GL_FLOAT, Vertex::positionOffset(), Vertex::PositionTupleSize, Vertex::stride());
-    _shaderProgram->setAttributeBuffer(1, GL_FLOAT, Vertex::uvOffset(), Vertex::UVTupleSize, Vertex::stride());
-    _shaderProgram->setAttributeBuffer(2, GL_FLOAT, Vertex::colorOffset(), Vertex::ColorTupleSize, Vertex::stride());
-    _shaderProgram->setAttributeBuffer(3, GL_INT, Vertex::idOffset(), Vertex::IDTupleSize, Vertex::stride());
-
-    // Release (unbind) all
-    _vao.release();
-    _buffer.release();
-    _shaderProgram->release();
-
-    _projectionMatrixID = _shaderProgram->uniformLocation("projection");
-    _cameraMatrixID = _shaderProgram->uniformLocation("camera");
-    _borderWidthID = _shaderProgram->uniformLocation("borderWidth");
-    _aspectID = _shaderProgram->uniformLocation("aspect");
 }
 
 void RubiksCubeView::resizeGL(int w, int h)
@@ -109,27 +82,25 @@ void RubiksCubeView::paintGL()
 {
     QOpenGLFunctions *f = QOpenGLContext::currentContext()->functions();
 
-    // Clear
-    f->glClear(GL_COLOR_BUFFER_BIT);
-
-    // Render using our shader
-    _shaderProgram->bind();
+    if(_cube != nullptr)
     {
-    _vao.bind();
-
-    _shaderProgram->setUniformValue(_projectionMatrixID, _projection);
-    _shaderProgram->setUniformValue(_cameraMatrixID, _camera);
-    _shaderProgram->setUniformValue(_borderWidthID, 0.015f);
-    f->glDrawArrays(GL_QUADS, 0, _cube->getSizeOfVertices() / sizeof(_cube->vertices()[0]));
-    _vao.release();
+        if(!_cube->isInitialized())
+        {
+            _cube->init();
+            _camera.setToIdentity();
+            _camera.translate(0, 0, -float(_cube->width()) * (3));
+            _camera.rotate(45, 0, 1, 0);
+            _camera.rotate(25, 1, 0, 1);
+        }
     }
-    _shaderProgram->release();
+
+    f->glClear(GL_COLOR_BUFFER_BIT);
+    _cube->display(f, _projection, _camera);
+
     update();
 }
 
 void RubiksCubeView::clean()
 {
-    _buffer.destroy();
-    _vao.destroy();
-    delete _shaderProgram;
+
 }

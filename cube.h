@@ -22,7 +22,7 @@ public:
 
     const Vertex* vertices() const { return _vertices; }
     const Vertex* vertices(Face face) const;
-    const int verticesSize() const { return sizeof(_vertices); }
+    int verticesSize() { return sizeof(_vertices); }
 
 private:
     QVector3D _position;

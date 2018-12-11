@@ -17,7 +17,7 @@ public:
     RubiksCubeView(QWidget *parent);
     ~RubiksCubeView();
 
-    void setCube(const RubiksCube* cube);
+    void setCube(RubiksCube* cube);
     void keyPressEvent(QKeyEvent *event) override;
 
 protected:
@@ -29,20 +29,12 @@ private:
     void clean();
 
 private:
-    const RubiksCube* _cube;
+    RubiksCube* _cube;
 
     QMatrix4x4 _camera;
     QMatrix4x4 _projection;
-    QOpenGLBuffer _buffer;
-    QOpenGLVertexArrayObject _vao;
-    QOpenGLShaderProgram *_shaderProgram;
 
     float _aspectRatio;
-
-    int _projectionMatrixID;
-    int _cameraMatrixID;
-    int _borderWidthID;
-    int _aspectID;
 };
 
 #endif // RUBIKCUBEVIEW_H

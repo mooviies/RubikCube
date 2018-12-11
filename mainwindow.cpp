@@ -18,7 +18,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->pushButtonScramble, SIGNAL(clicked(bool)), this, SLOT(scramble()));
     connect(ui->pushButtonSolve, SIGNAL(clicked(bool)), this, SLOT(solve()));
 
-    ui->openGLWidget->setCube(new RubiksCube(200));
+    ui->openGLWidget->setCube(new RubiksCube(3));
 }
 
 MainWindow::~MainWindow()

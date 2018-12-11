@@ -8,15 +8,27 @@ out vec4 fColor;
 void main()
 {
     float min = bw, max = 1.0 - bw;
+    int nbLoop = 10;
+    bool border = false;
+    for(int i = 0; i < nbLoop; i++)
+    {
+        if(uvPos.x <= min || uvPos.x >= max || uvPos.y <= min || uvPos.y >= max)
+        {
+            if(i == 0)
+                fColor.rgb = vec3(0.0);
+            else
+                fColor.rgb = vColor.rgb / (nbLoop - i);
 
-    if(uvPos.x < min || uvPos.x >= max || uvPos.y < min || uvPos.y >= max)
-    {
-        fColor.rgb = vec3(0.0);
+            border = true;
+            break;
+        }
+
+        min += 0.002;
+        max -= 0.002;
     }
-    else
-    {
+
+    if(!border)
         fColor.rgb = vColor.rgb;
-    }
 
     fColor.a = 1.0;
 }

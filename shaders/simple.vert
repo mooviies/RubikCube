@@ -6,6 +6,7 @@ layout(location = 3) in int id;
 
 uniform mat4 projection;
 uniform mat4 camera;
+uniform mat4 rotation;
 uniform float borderWidth;
 
 out vec4 vColor;
@@ -16,6 +17,6 @@ void main()
 {
   bw = borderWidth;
   uvPos = uv;
-  gl_Position = projection * camera * vec4(position, 1.0);
+  gl_Position = projection * camera * rotation * vec4(position, 1.0);
   vColor = vec4(color, 1.0);
 }

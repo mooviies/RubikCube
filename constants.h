@@ -14,28 +14,28 @@ enum Color
 
 enum class Face
 {
-    Left  = 0x01,
-    Front = 0x02,
-    Right = 0x04,
-    Back  = 0x08,
-    Up    = 0x10,
-    Down  = 0x20
+    Left  = 0,
+    Front = 1,
+    Right = 2,
+    Back  = 3,
+    Up    = 4,
+    Down  = 5
 };
 
-enum class Layer
+enum Layer
 {
-    Left = 0,
-    Front,
-    Right,
-    Back,
-    Up,
-    Down,
-    Middle,
-    Equator,
-    Standing,
-    CubeR,
-    CubeU,
-    CubeF
+    Left      = 0x001,
+    Front     = 0x002,
+    Right     = 0x004,
+    Back      = 0x008,
+    Up        = 0x010,
+    Down      = 0x020,
+    Middle    = 0x040,
+    Equator   = 0x080,
+    Standing  = 0x100,
+    CubeR     = 0x005,
+    CubeU     = 0x030,
+    CubeF     = 0x00A
 };
 
 enum class LayerLetterOut
@@ -62,6 +62,13 @@ enum class LayerLetterIn
     Back  = 'b',
     Up    = 'u',
     Down  = 'd'
+};
+
+enum class Rotation
+{
+    Clockwise,
+    CounterClockwise,
+    Turn180
 };
 
 const char SYMBOL_COUNTER_CLOCKWISE = '\'';

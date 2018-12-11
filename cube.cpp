@@ -121,4 +121,5 @@ const Vertex* Cube::vertices(Face face) const
         return _verticesByFace[5];
         break;
     }
+    return _vertices;
 }
