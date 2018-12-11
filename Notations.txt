@@ -16,9 +16,10 @@ R : Right
 B : Back
 D : Down
 
-M : Middle   : Layer between L and R, turn direction as L
-E : Equator  : Layer between U and D, turn direction as D
-S : Standing : Layer between F and B, turn direction as F
+M : Middle     : Layer between L and R, turn direction as L
+E : Equator    : Layer between U and D, turn direction as D
+H : Horizontal : Layer between U and D, turn direction as U
+S : Standing   : Layer between F and B, turn direction as F
 
 x : Entire cube on R
 y : Entire cube on U

@@ -24,34 +24,36 @@ enum class Face
 
 enum Layer
 {
-    Left      = 0x001,
-    Front     = 0x002,
-    Right     = 0x004,
-    Back      = 0x008,
-    Up        = 0x010,
-    Down      = 0x020,
-    Middle    = 0x040,
-    Equator   = 0x080,
-    Standing  = 0x100,
-    CubeR     = 0x005,
-    CubeU     = 0x030,
-    CubeF     = 0x00A
+    Left       = 0x001,
+    Front      = 0x002,
+    Right      = 0x004,
+    Back       = 0x008,
+    Up         = 0x010,
+    Down       = 0x020,
+    Middle     = 0x040,
+    Equator    = 0x080,
+    Horizontal = 0x100,
+    Standing   = 0x200,
+    CubeR      = 0x005,
+    CubeU      = 0x030,
+    CubeF      = 0x00A
 };
 
 enum class LayerLetterOut
 {
-    Left     = 'L',
-    Front    = 'F',
-    Right    = 'R',
-    Back     = 'B',
-    Up       = 'U',
-    Down     = 'D',
-    Middle   = 'M',
-    Equator  = 'E',
-    Standing = 'S',
-    CubeR    = 'x',
-    CubeU    = 'y',
-    CubeF    = 'z'
+    Left       = 'L',
+    Front      = 'F',
+    Right      = 'R',
+    Back       = 'B',
+    Up         = 'U',
+    Down       = 'D',
+    Middle     = 'M',
+    Equator    = 'E',
+    Horizontal = 'H',
+    Standing   = 'S',
+    CubeR      = 'x',
+    CubeU      = 'y',
+    CubeF      = 'z'
 };
 
 enum class LayerLetterIn
@@ -79,5 +81,8 @@ const int NUMBER_SIDE = 6;
 
 const float CUBE_SIZE = 0.5f;
 const float CUBE_HSIZE = CUBE_SIZE / 2.0f;
+
+const int MIN_SIZE = 1;
+const int MAX_SIZE = 100;
 
 #endif // CONSTANTS_H

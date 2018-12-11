@@ -8,10 +8,13 @@
 
 RubiksCube::RubiksCube(int size)
 {
-    if(size < 1)
-        throw std::invalid_argument("A rubik's cube can't be smaller than 1");
+    if(size < MIN_SIZE)
+        _size = MIN_SIZE;
+    else if(size > MAX_SIZE)
+        _size = MAX_SIZE;
+    else
+        _size = size;
 
-    _size = size;
     _shaderProgram = nullptr;
 }
 
@@ -62,7 +65,9 @@ bool RubiksCube::rotate(Layer layer, Rotation rotation, int layerPos, bool wide)
     if(_isAnimating)
         return false;
 
-    if(_size % 2 == 0 && (layer & (Layer::Equator | Layer::Middle | Layer::Standing)))
+    int centerLayers = Layer::Equator | Layer::Middle | Layer::Horizontal | Layer::Standing;
+
+    if(_size % 2 == 0 && (layer & centerLayers))
         return false;
 
     if(layerPos <= 0 || layerPos > _size / 2)
@@ -70,20 +75,42 @@ bool RubiksCube::rotate(Layer layer, Rotation rotation, int layerPos, bool wide)
 
     _buffer.bind();
 
-    for(int i = 0; i < NUMBER_SIDE; i++)
+    if(layer & centerLayers)
     {
-        if(layer & 1 << i)
+        int cl = _size / 2 + 1;
+        switch(layer)
         {
-            if((wide || layerPos == 1))
-            {
-                rotateFace((Face)i, rotation);
-            }
-
-            for(int j = wide ? 1: layerPos; j <= layerPos; j++)
-            {
-                rotateLayer((Face)i, j, rotation);
-            }
+        case Layer::Equator:
+            rotateLayer(Face::Down, cl, rotation);
             break;
+        case Layer::Horizontal:
+            rotateLayer(Face::Up, cl, rotation);
+            break;
+        case Layer::Middle:
+            break;
+        case Layer::Standing:
+            break;
+        default:
+            break;
+        }
+    }
+    else
+    {
+        for(int i = 0; i < NUMBER_SIDE; i++)
+        {
+            if(layer & 1 << i)
+            {
+                if((wide || layerPos == 1))
+                {
+                    rotateFace((Face)i, rotation);
+                }
+
+                for(int j = wide ? 1: layerPos; j <= layerPos; j++)
+                {
+                    rotateLayer((Face)i, j, rotation);
+                }
+                break;
+            }
         }
     }
 
@@ -133,7 +160,6 @@ void RubiksCube::rotateFace(Face faceID, Rotation rotation)
 void RubiksCube::rotateLayer(Face faceID, int layer, Rotation rotation)
 {
     bool isFaceUp = faceID == Face::Up;
-
     if(isFaceUp || faceID == Face::Down)
     {
         int j = isFaceUp ? _size - layer : layer - 1;
@@ -176,6 +202,98 @@ void RubiksCube::rotateLayer(Face faceID, int layer, Rotation rotation)
             setColor(Face::Back, i, j, _colorByFace[back[i][j]]);
             setColor(Face::Left, i, j, _colorByFace[left[i][j]]);
         }
+
+        return;
+    }
+
+    bool isFaceLeft = faceID == Face::Left;
+    if(isFaceLeft || faceID == Face::Right)
+    {
+        int i = isFaceLeft ? layer - 1: _size - layer;
+        bool clockwiseUpView = (rotation == Rotation::Clockwise && isFaceLeft) || (rotation == Rotation::CounterClockwise && !isFaceLeft);
+        bool counterClockwiseUpView = (rotation == Rotation::CounterClockwise && isFaceLeft) || (rotation == Rotation::Clockwise && !isFaceLeft);
+
+        Face** up = _cube[(int)Face::Up];
+        Face** front = _cube[(int)Face::Front];
+        Face** down = _cube[(int)Face::Down];
+        Face** back = _cube[(int)Face::Back];
+
+        for(int j = 0; j < _size; j++)
+        {
+            Face buffer = up[i][j];
+            if(clockwiseUpView)
+            {
+                up[i][j] = back[_size - i - 1][_size - j - 1];
+                back[_size - i - 1][_size - j - 1] = down[i][j];
+                down[i][j] = front[i][j];
+                front[i][j] = buffer;
+            }
+            else if(counterClockwiseUpView)
+            {
+                up[i][j] = front[i][j];
+                front[i][j] = down[i][j];
+                down[i][j] = back[_size - i - 1][_size - j - 1];
+                back[_size - i - 1][_size - j - 1] = buffer;
+            }
+            else
+            {
+                Face buffer2 = back[_size - i - 1][_size - j - 1];
+                up[i][j] = down[i][j];
+                down[i][j] = buffer;
+                back[_size - i - 1][_size - j - 1] = front[i][j];
+                front[i][j] = buffer2;
+            }
+            setColor(Face::Front, i, j, _colorByFace[front[i][j]]);
+            setColor(Face::Up, i, j, _colorByFace[up[i][j]]);
+            setColor(Face::Back, _size - i - 1, _size - j - 1, _colorByFace[back[_size - i - 1][_size - j - 1]]);
+            setColor(Face::Down, i, j, _colorByFace[down[i][j]]);
+        }
+        return;
+    }
+
+    bool isFaceFront = faceID == Face::Front;
+    if(isFaceFront || faceID == Face::Back)
+    {
+        int i = isFaceFront ? layer - 1: _size - layer;
+        bool clockwiseUpView = (rotation == Rotation::Clockwise && isFaceFront) || (rotation == Rotation::CounterClockwise && !isFaceFront);
+        bool counterClockwiseUpView = (rotation == Rotation::CounterClockwise && isFaceFront) || (rotation == Rotation::Clockwise && !isFaceFront);
+
+        Face** up = _cube[(int)Face::Up];
+        Face** right = _cube[(int)Face::Right];
+        Face** down = _cube[(int)Face::Down];
+        Face** left = _cube[(int)Face::Left];
+
+        for(int j = 0; j < _size; j++)
+        {
+            Face buffer = up[_size - j - 1][i];
+            if(clockwiseUpView)
+            {
+                up[_size - j - 1][i] = left[_size - i - 1][_size - j - 1];
+                left[_size - i - 1][_size - j - 1] = down[j][_size - i - 1];
+                down[j][_size - i - 1] = right[i][j];
+                right[i][j] = buffer;
+            }
+            else if(counterClockwiseUpView)
+            {
+                up[_size - j - 1][i] = right[i][j];
+                right[i][j] = down[j][_size - i - 1];
+                down[j][_size - i - 1] = left[_size - i - 1][_size - j - 1];
+                left[_size - i - 1][_size - j - 1] = buffer;
+            }
+            else
+            {
+                Face buffer2 = left[_size - i - 1][_size - j - 1];
+                up[_size - j - 1][i] = down[j][_size - i - 1];
+                down[j][_size - i - 1] = buffer;
+                left[_size - i - 1][_size - j - 1] = right[i][j];
+                right[i][j] = buffer2;
+            }
+            setColor(Face::Up, _size - j - 1, i, _colorByFace[up[_size - j - 1][i]]);
+            setColor(Face::Left, _size - i - 1, _size - j - 1, _colorByFace[left[_size - i - 1][_size - j - 1]]);
+            setColor(Face::Down, j, _size - i - 1, _colorByFace[down[j][_size - i - 1]]);
+            setColor(Face::Right, i, j, _colorByFace[right[i][j]]);
+        }
+        return;
     }
 }
 
