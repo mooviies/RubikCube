@@ -44,7 +44,9 @@ enum RotationComponent
     CounterClockwise = 0x0800000,
     Turn180          = 0x1000000,
     NbLayerMask      = 0x00000FF,
-    ComponentsMask   = 0xFFFFF00
+    ComponentsMask   = 0xFFFFF00,
+    MandatoryMaskA   = 0x01FFF00,
+    MandatoryMaskB   = 0x1C00000
 };
 
 enum LayerOut

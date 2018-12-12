@@ -3,6 +3,7 @@
 
 #include <QRegularExpression>
 #include <QInputDialog>
+#include <QRandomGenerator>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -10,11 +11,12 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    connect(ui->actionNew, SIGNAL(triggered(bool)), this, SLOT(newCube()));
+    connect(ui->actionNew, SIGNAL(triggered(bool)), ui->pushButtonNew, SLOT(click()));
     connect(ui->actionReset, SIGNAL(triggered(bool)), ui->pushButtonReset, SLOT(click()));
     connect(ui->actionSave, SIGNAL(triggered(bool)), ui->pushButtonSave, SLOT(click()));
     connect(ui->actionLoad, SIGNAL(triggered(bool)), ui->pushButtonLoad, SLOT(click()));
 
+    connect(ui->pushButtonNew, SIGNAL(clicked(bool)), this, SLOT(newCube()));
     connect(ui->pushButtonSave, SIGNAL(clicked(bool)), this, SLOT(save()));
     connect(ui->pushButtonLoad, SIGNAL(clicked(bool)), this, SLOT(load()));
     connect(ui->pushButtonReset, SIGNAL(clicked(bool)), this, SLOT(reset()));
@@ -66,11 +68,7 @@ MainWindow::MainWindow(QWidget *parent) :
     _groupB.append(ui->control_u);
     _groupB.append(ui->control_d);
 
-    int size = 3;
-    ui->control_nbLayer->setMaximum(size / 2);
-
-    _cube = new RubiksCube(size);
-    ui->openGLWidget->setCube(_cube);
+    setCube(new RubiksCube(3));
 
     _currentCommand = 0;
 }
@@ -81,15 +79,37 @@ MainWindow::~MainWindow()
     delete _cube;
 }
 
+bool MainWindow::rotate(int flags)
+{
+    return _cube->rotate(flags, ui->checkBoxFastMode->isChecked());
+}
+
+bool MainWindow::rotate(const QList<int>& flagsList)
+{
+    return _cube->rotate(flagsList, ui->checkBoxFastMode->isChecked());
+}
+
+void MainWindow::setCube(RubiksCube *cube)
+{
+    _history.clear();
+    _currentCommand = 0;
+    ui->textEditHistory->clear();
+
+    _cube = cube;
+    ui->openGLWidget->setCube(_cube);
+    ui->control_nbLayer->setMaximum(_cube->maxLayer());
+}
+
 void MainWindow::keyPressEvent(QKeyEvent *event)
 {
     ui->openGLWidget->keyPressEvent(event);
 }
 
-void MainWindow::addCommands(const QString& expression)
+QList<int> MainWindow::getCommands(const QString& expression)
 {
     QRegularExpression re("(\\d*)(F|B|R|L|U|D|x|y|z|M|E|H|S)?(f|b|r|l|u|d)?(w?)((?:2|')?)");
     auto iter = re.globalMatch(expression);
+    QList<int> commands;
 
     while(iter.hasNext())
     {
@@ -153,7 +173,7 @@ void MainWindow::addCommands(const QString& expression)
         {
             if(hasBigFace)
             {
-                if(face.size() == 2 && face[1].toUpper() == face[0])
+                if(faceSmall[0].toUpper() == face[0])
                     flags |= RotationComponent::Wide;
             }
             else
@@ -179,8 +199,8 @@ void MainWindow::addCommands(const QString& expression)
                     flags |= RotationComponent::Right;
                     break;
                 }
-                currentNbLayer = 2;
             }
+            currentNbLayer = 2;
         }
 
         if(nbLayer.isEmpty())
@@ -200,8 +220,10 @@ void MainWindow::addCommands(const QString& expression)
         else
             flags |= RotationComponent::Turn180;
 
-        _commands.append(flags);
+        commands.append(flags);
     }
+
+    return commands;
 }
 
 void MainWindow::newCube()
@@ -211,8 +233,7 @@ void MainWindow::newCube()
     if(ok)
     {
         delete _cube;
-        _cube = new RubiksCube(size);
-        ui->openGLWidget->setCube(_cube);
+        setCube(new RubiksCube(size));
     }
 }
 
@@ -230,20 +251,71 @@ void MainWindow::reset()
 {
     int size = _cube->size();
     delete _cube;
-    _cube = new RubiksCube(size);
-    ui->openGLWidget->setCube(_cube);
+    setCube(new RubiksCube(size));
 }
 
 void MainWindow::execute()
 {
-    _commands.clear();
-    addCommands(ui->textEditActions->toPlainText());
-    _cube->rotate(_commands);
+    auto commands = getCommands(ui->textEditActions->toPlainText());
+    rotate(commands);
+
+    ui->textEditHistory->append(ui->textEditActions->toPlainText() + "\n");
 }
 
 void MainWindow::scramble()
 {
+    ui->textEditActions->clear();
+    QString expr;
 
+    QList<char> mainFaces;
+    mainFaces.append(LayerOut::L_Up);
+    mainFaces.append(LayerOut::L_Down);
+    mainFaces.append(LayerOut::L_Left);
+    mainFaces.append(LayerOut::L_Right);
+    mainFaces.append(LayerOut::L_Front);
+    mainFaces.append(LayerOut::L_Back);
+
+    QList<QString> rotations;
+    rotations.append("");
+    rotations.append(QString(SYMBOL_COUNTER_CLOCKWISE));
+    rotations.append(QString(SYMBOL_180));
+
+    char previous = ' ';
+
+    for(int i = 0; i < ui->spinBoxScrambleLength->value(); i++)
+    {
+        QString el;
+        char face = ' ';
+        do
+        {
+            face = mainFaces[QRandomGenerator::global()->generate() % mainFaces.size()];
+        }while(previous == face);
+        el = face;
+        previous = face;
+
+        bool wide = QRandomGenerator::global()->generateDouble() >= 0.5;
+
+        int layerN = QRandomGenerator::global()->generate() % _cube->maxLayer() + 1;
+
+        if(layerN == 2)
+        {
+            if(wide)
+                el.append(el.toLower());
+            else
+                el = el.toLower();
+        }
+        else if(layerN > 2)
+        {
+            el.insert(0, QVariant(layerN).toString());
+            if(wide)
+                el.append(SYMBOL_WIDE);
+        }
+
+        el.append(rotations[QRandomGenerator::global()->generate() % rotations.size()]);
+        expr += el + " ";
+    }
+
+    ui->textEditActions->setText(expr);
 }
 
 void MainWindow::solve()
@@ -253,61 +325,105 @@ void MainWindow::solve()
 
 void MainWindow::rotateWithControls(int flags)
 {
+    QString expr;
     if(ui->control_B->isChecked())
     {
         flags |= RotationComponent::Back;
+        expr = LayerOut::L_Back;
     }
     else if(ui->control_F->isChecked())
     {
         flags |= RotationComponent::Front;
+        expr = LayerOut::L_Front;
     }
     else if(ui->control_D->isChecked())
     {
         flags |= RotationComponent::Down;
+        expr = LayerOut::L_Down;
     }
     else if(ui->control_U->isChecked())
     {
         flags |= RotationComponent::Up;
+        expr = LayerOut::L_Up;
     }
     else if(ui->control_L->isChecked())
     {
         flags |= RotationComponent::Left;
+        expr = LayerOut::L_Left;
     }
     else if(ui->control_R->isChecked())
     {
         flags |= RotationComponent::Right;
+        expr = LayerOut::L_Right;
     }
     else if(ui->control_E->isChecked())
     {
         flags |= RotationComponent::Equator;
+        expr = LayerOut::L_Equator;
     }
     else if(ui->control_M->isChecked())
     {
         flags |= RotationComponent::Middle;
+        expr = LayerOut::L_Middle;
     }
     else if(ui->control_S->isChecked())
     {
         flags |= RotationComponent::Standing;
+        expr = LayerOut::L_Standing;
     }
     else if(ui->control_x->isChecked())
     {
         flags |= RotationComponent::CubeX;
+        expr = LayerOut::L_CubeX;
     }
     else if(ui->control_y->isChecked())
     {
         flags |= RotationComponent::CubeY;
+        expr = LayerOut::L_CubeY;
     }
     else if(ui->control_z->isChecked())
     {
         flags |= RotationComponent::CubeZ;
+        expr = LayerOut::L_CubeZ;
     }
 
-    flags += ui->control_nbLayer->value();
+    int nbLayer = ui->control_nbLayer->value();
+    flags += nbLayer;
 
     if(ui->control_w->isChecked())
+    {
         flags |= RotationComponent::Wide;
+        if(!(flags & (RotationComponent::CenterLayers | RotationComponent::WholeCube)))
+        {
+            if(nbLayer == 2)
+                expr.append(expr.toLower());
+            else if(nbLayer > 2)
+            {
+                expr.insert(0, QVariant(nbLayer).toString());
+                expr.append(SYMBOL_WIDE);
+            }
+        }
+    }
+    else
+    {
+        if(!(flags & RotationComponent::CenterLayers))
+        {
+            if(nbLayer > 2)
+            {
+                expr.insert(0, QVariant(nbLayer).toString());
+            }
+            else if(nbLayer == 2)
+                expr = expr.toLower();
+        }
+    }
 
-    _cube->rotate(flags);
+    if(flags & RotationComponent::CounterClockwise)
+        expr.append(SYMBOL_COUNTER_CLOCKWISE);
+    else if(flags & RotationComponent::Turn180)
+        expr.append(SYMBOL_180);
+
+    if(rotate(flags))
+        ui->textEditHistory->append(expr + "\n");
 }
 
 void MainWindow::rotateClockwise()

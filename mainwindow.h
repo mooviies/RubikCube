@@ -19,11 +19,13 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-    void rotate(int flags);
+    bool rotate(int flags);
+    bool rotate(const QList<int>& flagsList);
+    void setCube(RubiksCube *cube);
 
 protected:
     void keyPressEvent(QKeyEvent *event) override;
-    void addCommands(const QString& expression);
+    QList<int> getCommands(const QString& expression);
 
 private slots:
     void newCube();
@@ -71,7 +73,7 @@ private:
     QList<QPushButton*> _groupB;
 
     int _currentCommand;
-    QList<int> _commands;
+    QList<int> _history;
 };
 
 #endif // MAINWINDOW_H

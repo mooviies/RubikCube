@@ -7,9 +7,9 @@ Cube::Cube() : _size(0)
 
 }
 
-Cube::Cube(QVector3D position, float size) : _position(position), _size(size), _id(0)
+Cube::Cube(QVector3D position, float size) : _position(position), _id(0)
 {
-
+    setSize(size);
 }
 
 void Cube::setPosition(const QVector3D& position)

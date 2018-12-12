@@ -18,6 +18,7 @@ public:
     RubiksCube(int size);
     ~RubiksCube();
 
+    int maxLayer() const { return _maxLayer; }
     int size() const { return _size; }
     float width() const { return _width; }
     inline float getID(int i, int j, int k) const { return j + k * _size + i * _size * _size; }
@@ -26,8 +27,8 @@ public:
 
     void init();
     void reset();
-    bool rotate(const QList<int>& flagsList);
-    bool rotate(int flags);
+    bool rotate(const QList<int>& flagsList, bool fast = false);
+    bool rotate(int flags, bool fast = false);
     void display(QOpenGLFunctions *f, const QMatrix4x4& projection, const QMatrix4x4& camera);
 
 protected:
@@ -54,10 +55,12 @@ private:
     int _currentCommand;
 
     bool _isAnimating;
+    bool _fastMode;
 
     float _width;
     float _cellWidth;
 
+    int _maxLayer;
     int _size;
     int _sizeOfVertices;
 

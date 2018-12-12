@@ -27,7 +27,7 @@
    <enum>Qt::ToolButtonIconOnly</enum>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <layout class="QHBoxLayout" name="horizontalLayout_3">
+   <layout class="QHBoxLayout" name="horizontalLayout_2">
     <item>
      <widget class="QFrame" name="frame">
       <property name="styleSheet">
@@ -84,25 +84,58 @@
     <item>
      <layout class="QVBoxLayout" name="verticalLayout_3">
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_2">
-        <item>
-         <widget class="QPushButton" name="pushButtonReset">
+       <layout class="QGridLayout" name="gridLayout_2">
+        <item row="0" column="0">
+         <widget class="QLabel" name="label">
           <property name="text">
-           <string>Reset</string>
+           <string>Length</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
           </property>
          </widget>
         </item>
-        <item>
+        <item row="0" column="1">
+         <widget class="QSpinBox" name="spinBoxScrambleLength">
+          <property name="alignment">
+           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+          </property>
+          <property name="minimum">
+           <number>1</number>
+          </property>
+          <property name="maximum">
+           <number>1000</number>
+          </property>
+          <property name="value">
+           <number>30</number>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="2">
          <widget class="QPushButton" name="pushButtonScramble">
           <property name="text">
            <string>Scramble</string>
           </property>
          </widget>
         </item>
-        <item>
+        <item row="1" column="2">
          <widget class="QPushButton" name="pushButtonSolve">
           <property name="text">
            <string>Solve</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QPushButton" name="pushButtonReset">
+          <property name="text">
+           <string>Reset</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QPushButton" name="pushButtonNew">
+          <property name="text">
+           <string>New</string>
           </property>
          </widget>
         </item>
@@ -119,14 +152,32 @@
          </attribute>
          <layout class="QVBoxLayout" name="verticalLayout">
           <item>
-           <widget class="QTextEdit" name="textEditActions"/>
-          </item>
-          <item>
-           <widget class="QPushButton" name="pushButtonExecute">
-            <property name="text">
-             <string>Execute</string>
+           <widget class="QTextEdit" name="textEditActions">
+            <property name="undoRedoEnabled">
+             <bool>true</bool>
+            </property>
+            <property name="acceptRichText">
+             <bool>false</bool>
             </property>
            </widget>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_3">
+            <item>
+             <widget class="QCheckBox" name="checkBoxFastMode">
+              <property name="text">
+               <string>FastMode</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushButtonExecute">
+              <property name="text">
+               <string>Execute</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </item>
          </layout>
         </widget>
@@ -136,7 +187,17 @@
          </attribute>
          <layout class="QVBoxLayout" name="verticalLayout_2">
           <item>
-           <widget class="QTextEdit" name="textEditHistory"/>
+           <widget class="QTextEdit" name="textEditHistory">
+            <property name="undoRedoEnabled">
+             <bool>false</bool>
+            </property>
+            <property name="acceptRichText">
+             <bool>false</bool>
+            </property>
+            <property name="textInteractionFlags">
+             <set>Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
+            </property>
+           </widget>
           </item>
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout">
@@ -1021,9 +1082,6 @@
     </property>
     <addaction name="actionUndo"/>
     <addaction name="actionRedo"/>
-    <addaction name="separator"/>
-    <addaction name="actionManual"/>
-    <addaction name="actionAnimate"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">

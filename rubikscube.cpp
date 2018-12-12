@@ -15,6 +15,8 @@ RubiksCube::RubiksCube(int size)
     else
         _size = size;
 
+    _currentCommand = 0;
+    _maxLayer = _size / 2;
     _shaderProgram = nullptr;
 }
 
@@ -37,6 +39,7 @@ void RubiksCube::init()
     _colorByFace.append(Color::White);
     _colorByFace.append(Color::Yellow);
 
+    _currentCommand = 0;
     _currentRotation = 0;
     _targetRotation = 0;
     _layerRotation.setToIdentity();
@@ -59,19 +62,31 @@ void RubiksCube::reset()
     init();
 }
 
-bool RubiksCube::rotate(const QList<int>& flagsList)
+bool RubiksCube::rotate(const QList<int>& flagsList, bool fastMode)
 {
+    if(flagsList.isEmpty() || _isAnimating)
+        return false;
+
+    _fastMode = fastMode;
     _currentCommand = 0;
     _commands = flagsList;
 }
 
-bool RubiksCube::rotate(int flags)
+bool RubiksCube::rotate(int flags, bool fastMode)
 {
     if(_isAnimating)
         return false;
 
+    _fastMode = fastMode;
+
     int layerPos = flags & RotationComponent::NbLayerMask;
     int components = flags & RotationComponent::ComponentsMask;
+
+    if(components == 0)
+        return false;
+
+    if(!(components & RotationComponent::MandatoryMaskA) || !(components & RotationComponent::MandatoryMaskB))
+        return false;
 
     if(_size % 2 == 0 && (components & RotationComponent::CenterLayers))
         return false;
@@ -162,6 +177,9 @@ bool RubiksCube::rotate(int flags)
     }
 
     _buffer.release();
+
+    if(_fastMode)
+        return true;
 
     switch(rotationFace)
     {
@@ -434,7 +452,7 @@ void RubiksCube::display(QOpenGLFunctions *f, const QMatrix4x4 &projection, cons
     _shaderProgram->release();
 
     if(!_isAnimating && _currentCommand < _commands.size())
-        rotate(_commands[_currentCommand++]);
+        rotate(_commands[_currentCommand++], _fastMode);
 }
 
 void RubiksCube::create()
@@ -609,6 +627,13 @@ void RubiksCube::setColor(int offset, Color color)
 void RubiksCube::setColor(Face face, int i, int j, Color color)
 {
     int baseOffset = Vertex::stride() * getID((int)face, i, j) * SQUARE_VERTICES_COUNT;
+
+    if(_fastMode)
+    {
+        setColor(baseOffset, color);
+        return;
+    }
+
     int tb = 1;
     int sizeOfInt = sizeof(tb);
 
