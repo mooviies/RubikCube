@@ -59,61 +59,102 @@ void RubiksCube::reset()
     init();
 }
 
-bool RubiksCube::rotate(Layer layer, Rotation rotation, int layerPos, bool wide)
+bool RubiksCube::rotate(const QList<int>& flagsList)
+{
+    _currentCommand = 0;
+    _commands = flagsList;
+}
+
+bool RubiksCube::rotate(int flags)
 {
     if(_isAnimating)
         return false;
 
-    int centerLayers = Layer::Equator | Layer::Middle | Layer::Horizontal | Layer::Standing;
+    int layerPos = flags & RotationComponent::NbLayerMask;
+    int components = flags & RotationComponent::ComponentsMask;
 
-    if(_size % 2 == 0 && (layer & centerLayers))
+    if(_size % 2 == 0 && (components & RotationComponent::CenterLayers))
         return false;
 
-    if(layerPos <= 0 || layerPos > _size / 2)
-        return false;
+    if(layerPos <= 0)
+        layerPos = 1;
+    else if(layerPos > _size / 2 + 1)
+        layerPos = _size / 2 + 1;
 
     Face rotationFace = Face::Up;
     _rotating.clear();
 
     _buffer.bind();
 
-    if(layer & centerLayers)
+    if(components & RotationComponent::WholeCube)
+    {
+        Face inverseRotationFace = Face::Up;
+        if(components & RotationComponent::CubeZ)
+        {
+            rotationFace = Face::Front;
+            inverseRotationFace = Face::Back;
+        }
+        else if(components & RotationComponent::CubeX)
+        {
+            rotationFace = Face::Right;
+            inverseRotationFace = Face::Left;
+        }
+        else if(components & RotationComponent::CubeY)
+        {
+            rotationFace = Face::Up;
+            inverseRotationFace = Face::Down;
+        }
+
+        rotateFace(rotationFace, components);
+        for(int i = 1; i <= _size; i++)
+        {
+            rotateLayer(rotationFace, components + i);
+        }
+
+        if(components & RotationComponent::Clockwise)
+            rotateFace(inverseRotationFace, RotationComponent::CounterClockwise);
+        else if(components & RotationComponent::CounterClockwise)
+            rotateFace(inverseRotationFace, RotationComponent::Clockwise);
+        else
+            rotateFace(inverseRotationFace, RotationComponent::Turn180);
+
+    }
+    else if(components & RotationComponent::CenterLayers)
     {
         int cl = _size / 2 + 1;
-        switch(layer)
+        if(components & RotationComponent::Equator)
         {
-        case Layer::Equator:
             rotationFace = Face::Down;
-            break;
-        case Layer::Horizontal:
-            rotationFace = Face::Up;
-            break;
-        case Layer::Middle:
-            rotationFace = Face::Left;
-            break;
-        case Layer::Standing:
-            rotationFace = Face::Front;
-            break;
-        default:
-            break;
         }
-        rotateLayer(rotationFace, cl, rotation);
+        else if(components & RotationComponent::Horizontal)
+        {
+            rotationFace = Face::Up;
+        }
+        else if(components & RotationComponent::Middle)
+        {
+            rotationFace = Face::Left;
+        }
+        else if(components & RotationComponent::Standing)
+        {
+            rotationFace = Face::Front;
+        }
+        rotateLayer(rotationFace, components + cl);
     }
     else
     {
         for(int i = 0; i < NUMBER_SIDE; i++)
         {
-            if(layer & 1 << i)
+            if(components & (0x100 << i))
             {
                 rotationFace = (Face)i;
-                if((wide || layerPos == 1))
+                if((components & RotationComponent::Wide || layerPos == 1))
                 {
-                    rotateFace(rotationFace, rotation);
+                    rotateFace(rotationFace, components);
                 }
 
-                for(int j = wide ? 1: layerPos; j <= layerPos; j++)
+                for(int j = (components & RotationComponent::Wide) ? 1: layerPos; j <= layerPos; j++)
                 {
-                    rotateLayer(rotationFace, j, rotation);
+                    rotateLayer(rotationFace, components + j);
                 }
                 break;
             }
@@ -144,18 +185,18 @@ bool RubiksCube::rotate(Layer layer, Rotation rotation, int layerPos, bool wide)
         break;
     }
 
-    switch(rotation)
+    if(components & RotationComponent::Clockwise)
     {
-    case Rotation::Clockwise:
         _targetRotation = 90;
-        break;
-    case Rotation::CounterClockwise:
+    }
+    else if(components & RotationComponent::CounterClockwise)
+    {
         _targetRotation = 90;
         _rotationVector *= -1;
-        break;
-    case Rotation::Turn180:
+    }
+    else
+    {
         _targetRotation = 180;
-        break;
     }
 
     _currentRotation = 0;
@@ -164,7 +205,7 @@ bool RubiksCube::rotate(Layer layer, Rotation rotation, int layerPos, bool wide)
     return true;
 }
 
-void RubiksCube::rotateFace(Face faceID, Rotation rotation)
+void RubiksCube::rotateFace(Face faceID, int flags)
 {
     faceID = _alternateFace[faceID];
     Face **face = _cube[(int)faceID];
@@ -179,21 +220,24 @@ void RubiksCube::rotateFace(Face faceID, Rotation rotation)
         }
     }
 
+    bool clockwise = flags & RotationComponent::Clockwise, counterClockwise = flags & RotationComponent::CounterClockwise,
+            turn180 = flags & RotationComponent::Turn180;
+
     for(int i = 0; i < _size; i++)
     {
         for(int j = 0; j < _size; j++)
         {
-            switch(rotation)
+            if(clockwise)
             {
-            case Rotation::Clockwise:
                 face[i][j] = buffer[_size - j - 1][i];
-                break;
-            case Rotation::CounterClockwise:
+            }
+            else if(counterClockwise)
+            {
                 face[i][j] = buffer[j][_size - i - 1];
-                break;
-            case Rotation::Turn180:
+            }
+            else if(turn180)
+            {
                 face[i][j] = buffer[_size - i - 1][_size - j - 1];
-                break;
             }
             int test = (int)face[i][j];
             setColor(faceID, i, j, _colorByFace[test]);
@@ -205,14 +249,17 @@ void RubiksCube::rotateFace(Face faceID, Rotation rotation)
     delete[] buffer;
 }
 
-void RubiksCube::rotateLayer(Face faceID, int layer, Rotation rotation)
+void RubiksCube::rotateLayer(Face faceID, int flags)
 {
+    bool clockwise = flags & RotationComponent::Clockwise, counterClockwise = flags & RotationComponent::CounterClockwise;
+    int layer = flags & RotationComponent::NbLayerMask;
+
     bool isFaceUp = faceID == Face::Up;
     if(isFaceUp || faceID == Face::Down)
     {
         int j = isFaceUp ? _size - layer : layer - 1;
-        bool clockwiseUpView = (rotation == Rotation::Clockwise && isFaceUp) || (rotation == Rotation::CounterClockwise && !isFaceUp);
-        bool counterClockwiseUpView = (rotation == Rotation::CounterClockwise && isFaceUp) || (rotation == Rotation::Clockwise && !isFaceUp);
+        bool clockwiseUpView = (clockwise && isFaceUp) || (counterClockwise && !isFaceUp);
+        bool counterClockwiseUpView = (counterClockwise && isFaceUp) || (clockwise && !isFaceUp);
 
         Face** front = _cube[(int)Face::Front];
         Face** left = _cube[(int)Face::Left];
@@ -258,8 +305,8 @@ void RubiksCube::rotateLayer(Face faceID, int layer, Rotation rotation)
     if(isFaceLeft || faceID == Face::Right)
     {
         int i = isFaceLeft ? layer - 1: _size - layer;
-        bool clockwiseUpView = (rotation == Rotation::Clockwise && isFaceLeft) || (rotation == Rotation::CounterClockwise && !isFaceLeft);
-        bool counterClockwiseUpView = (rotation == Rotation::CounterClockwise && isFaceLeft) || (rotation == Rotation::Clockwise && !isFaceLeft);
+        bool clockwiseUpView = (clockwise && isFaceLeft) || (counterClockwise && !isFaceLeft);
+        bool counterClockwiseUpView = (counterClockwise && isFaceLeft) || (clockwise && !isFaceLeft);
 
         Face** up = _cube[(int)Face::Up];
         Face** front = _cube[(int)Face::Front];
@@ -303,8 +350,8 @@ void RubiksCube::rotateLayer(Face faceID, int layer, Rotation rotation)
     if(isFaceFront || faceID == Face::Back)
     {
         int i = isFaceFront ? layer - 1: _size - layer;
-        bool clockwiseUpView = (rotation == Rotation::Clockwise && isFaceFront) || (rotation == Rotation::CounterClockwise && !isFaceFront);
-        bool counterClockwiseUpView = (rotation == Rotation::CounterClockwise && isFaceFront) || (rotation == Rotation::Clockwise && !isFaceFront);
+        bool clockwiseUpView = (clockwise && isFaceFront) || (counterClockwise && !isFaceFront);
+        bool counterClockwiseUpView = (counterClockwise && isFaceFront) || (clockwise && !isFaceFront);
 
         Face** up = _cube[(int)Face::Up];
         Face** right = _cube[(int)Face::Right];
@@ -385,6 +432,9 @@ void RubiksCube::display(QOpenGLFunctions *f, const QMatrix4x4 &projection, cons
 
     _vao.release();
     _shaderProgram->release();
+
+    if(!_isAnimating && _currentCommand < _commands.size())
+        rotate(_commands[_currentCommand++]);
 }
 
 void RubiksCube::create()
@@ -395,9 +445,11 @@ void RubiksCube::create()
 
 void RubiksCube::createModel()
 {
-    int nbVertices = NUMBER_SIDE * _size * _size * SQUARE_VERTICES_COUNT;
-    _vertices = new Vertex[nbVertices];
+    int nbCubeVertices = NUMBER_SIDE * _size * _size * SQUARE_VERTICES_COUNT;
+    int nbVertices = nbCubeVertices;// + nbInsideVertices * 3;
     _sizeOfVertices = sizeof(Vertex) * nbVertices;
+
+    _vertices = new Vertex[nbVertices];
     _width = getWidth(_size);
     _cellWidth = _width / float(_size);
     float halfCellWidth = _cellWidth / 2.0;

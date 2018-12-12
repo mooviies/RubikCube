@@ -5,5 +5,8 @@
         <file>shaders/bordergeo.vert</file>
         <file>shaders/border.frag</file>
         <file>shaders/border.vert</file>
+        <file>images/rubik.png</file>
+        <file>images/refresh-arrow.png</file>
+        <file>images/undo-arrow.png</file>
     </qresource>
 </RCC>

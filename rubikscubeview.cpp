@@ -24,57 +24,6 @@ void RubiksCubeView::setCube(RubiksCube *cube)
 
 void RubiksCubeView::keyPressEvent(QKeyEvent *event)
 {
-    switch(event->key())
-    {
-    case Qt::Key_D:
-        _camera.rotate(5, 0, 1, 0);
-        break;
-    case Qt::Key_A:
-        _camera.rotate(-5, 0, 1, 0);
-        break;
-    case Qt::Key_W:
-        _camera.rotate(5, 1, 0, 0);
-        break;
-    case Qt::Key_S:
-        _camera.rotate(-5, 1, 0, 0);
-        break;
-    case Qt::Key_E:
-        _cube->rotate(Layer::Left, Rotation::Clockwise);
-        break;
-    case Qt::Key_R:
-        _cube->rotate(Layer::Left, Rotation::Turn180, 2);
-        break;
-    case Qt::Key_T:
-        _cube->rotate(Layer::Right, Rotation::Clockwise);
-        break;
-    case Qt::Key_Y:
-        _cube->rotate(Layer::Right, Rotation::Turn180, 2);
-        break;
-    case Qt::Key_F:
-        _cube->rotate(Layer::Up, Rotation::Clockwise);
-        break;
-    case Qt::Key_G:
-        _cube->rotate(Layer::Up, Rotation::Turn180, 2);
-        break;
-    case Qt::Key_H:
-        _cube->rotate(Layer::Down, Rotation::Clockwise);
-        break;
-    case Qt::Key_J:
-        _cube->rotate(Layer::Down, Rotation::Turn180, 2);
-        break;
-    case Qt::Key_Z:
-        _cube->rotate(Layer::Front, Rotation::Clockwise);
-        break;
-    case Qt::Key_X:
-        _cube->rotate(Layer::Front, Rotation::Turn180, 2);
-        break;
-    case Qt::Key_C:
-        _cube->rotate(Layer::Back, Rotation::Clockwise);
-        break;
-    case Qt::Key_V:
-        _cube->rotate(Layer::Back, Rotation::Turn180, 2);
-        break;
-    }
 }
 
 void RubiksCubeView::initializeGL()

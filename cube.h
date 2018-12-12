@@ -13,6 +13,8 @@ public:
     Cube();
     Cube(QVector3D position, float size);
 
+    int size() const { return _size; }
+
     void setPosition(const QVector3D& position);
     void setSize(float size);
     void setColor(Face face, Color color);

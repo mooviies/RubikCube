@@ -87,10 +87,10 @@ void Cube::generate()
     _vertices[19] = Vertex(QVector3D(-hsize,  hsize, -hsize) + _position, QVector2D(0, 1), _colors[4]);
 
     // Down
-    _vertices[20] = Vertex(QVector3D(-hsize,  -hsize, hsize) + _position, QVector2D(0, 0), _colors[5]);
-    _vertices[21] = Vertex(QVector3D(hsize,  -hsize, hsize) + _position, QVector2D(1, 0), _colors[5]);
-    _vertices[22] = Vertex(QVector3D(hsize,  -hsize, -hsize) + _position, QVector2D(1, 1), _colors[5]);
-    _vertices[23] = Vertex(QVector3D(-hsize,  -hsize, -hsize) + _position, QVector2D(0, 1), _colors[5]);
+    _vertices[20] = Vertex(QVector3D(-hsize,  -hsize, -hsize) + _position, QVector2D(0, 0), _colors[5]);
+    _vertices[21] = Vertex(QVector3D(hsize,  -hsize, -hsize) + _position, QVector2D(1, 0), _colors[5]);
+    _vertices[22] = Vertex(QVector3D(hsize,  -hsize, hsize) + _position, QVector2D(1, 1), _colors[5]);
+    _vertices[23] = Vertex(QVector3D(-hsize,  -hsize, hsize) + _position, QVector2D(0, 1), _colors[5]);
 
     for(int i = 0; i < CUBE_VERTICES_COUNT; i++)
     {

@@ -2,6 +2,10 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QList>
+#include <QPushButton>
+
+#include "rubikscube.h"
 
 namespace Ui {
 class MainWindow;
@@ -15,10 +19,14 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+    void rotate(int flags);
+
 protected:
     void keyPressEvent(QKeyEvent *event) override;
+    void addCommands(const QString& expression);
 
 private slots:
+    void newCube();
     void save();
     void load();
     void reset();
@@ -28,8 +36,42 @@ private slots:
     void scramble();
     void solve();
 
+    void rotateWithControls(int flags);
+    void rotateClockwise();
+    void rotateCounterClockwise();
+    void rotateTurn180();
+
+    void pushF(bool checked);
+    void pushB(bool checked);
+    void pushL(bool checked);
+    void pushR(bool checked);
+    void pushU(bool checked);
+    void pushD(bool checked);
+    void pushE(bool checked);
+    void pushM(bool checked);
+    void pushS(bool checked);
+    void pushX(bool checked);
+    void pushY(bool checked);
+    void pushZ(bool checked);
+
+    void pushf(bool checked);
+    void pushb(bool checked);
+    void pushl(bool checked);
+    void pushr(bool checked);
+    void pushu(bool checked);
+    void pushd(bool checked);
+
+    void nbLChanged(int value);
+
 private:
     Ui::MainWindow *ui;
+    RubiksCube *_cube;
+
+    QList<QPushButton*> _groupA;
+    QList<QPushButton*> _groupB;
+
+    int _currentCommand;
+    QList<int> _commands;
 };
 
 #endif // MAINWINDOW_H

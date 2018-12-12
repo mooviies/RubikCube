@@ -26,12 +26,13 @@ public:
 
     void init();
     void reset();
-    bool rotate(Layer layer, Rotation rotation, int layerPos = 1, bool wide = true);
+    bool rotate(const QList<int>& flagsList);
+    bool rotate(int flags);
     void display(QOpenGLFunctions *f, const QMatrix4x4& projection, const QMatrix4x4& camera);
 
 protected:
-    void rotateFace(Face faceID, Rotation rotation);
-    void rotateLayer(Face faceID, int layer, Rotation rotation);
+    void rotateFace(Face faceID, int flags);
+    void rotateLayer(Face faceID, int flags);
     void completeRotation();
 
 private:
@@ -49,6 +50,9 @@ private:
     Face ***_cube;
     Vertex *_vertices;
 
+    QList<int> _commands;
+    int _currentCommand;
+
     bool _isAnimating;
 
     float _width;
@@ -59,6 +63,8 @@ private:
 
     QMap<Face, Face> _alternateFace;
     QList<Color> _colorByFace;
+    QMap<RotationComponent, int> _insideOffset;
+    QMap<RotationComponent, int> _insidePosition;
 
     QOpenGLShaderProgram *_shaderProgram;
     QOpenGLBuffer _buffer;

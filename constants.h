@@ -22,55 +22,56 @@ enum class Face
     Down  = 5
 };
 
-enum Layer
+enum RotationComponent
 {
-    Left       = 0x001,
-    Front      = 0x002,
-    Right      = 0x004,
-    Back       = 0x008,
-    Up         = 0x010,
-    Down       = 0x020,
-    Middle     = 0x040,
-    Equator    = 0x080,
-    Horizontal = 0x100,
-    Standing   = 0x200,
-    CubeR      = 0x005,
-    CubeU      = 0x030,
-    CubeF      = 0x00A
+    Left             = 0x0000100,
+    Front            = 0x0000200,
+    Right            = 0x0000400,
+    Back             = 0x0000800,
+    Up               = 0x0001000,
+    Down             = 0x0002000,
+    Middle           = 0x0004000,
+    Equator          = 0x0008000,
+    Horizontal       = 0x0010000,
+    Standing         = 0x0020000,
+    CenterLayers     = 0x003C000,
+    CubeX            = 0x0040000,
+    CubeY            = 0x0080000,
+    CubeZ            = 0x0100000,
+    WholeCube        = 0x01C0000,
+    Wide             = 0x0200000,
+    Clockwise        = 0x0400000,
+    CounterClockwise = 0x0800000,
+    Turn180          = 0x1000000,
+    NbLayerMask      = 0x00000FF,
+    ComponentsMask   = 0xFFFFF00
 };
 
-enum class LayerLetterOut
+enum LayerOut
 {
-    Left       = 'L',
-    Front      = 'F',
-    Right      = 'R',
-    Back       = 'B',
-    Up         = 'U',
-    Down       = 'D',
-    Middle     = 'M',
-    Equator    = 'E',
-    Horizontal = 'H',
-    Standing   = 'S',
-    CubeR      = 'x',
-    CubeU      = 'y',
-    CubeF      = 'z'
+    L_Left       = 'L',
+    L_Front      = 'F',
+    L_Right      = 'R',
+    L_Back       = 'B',
+    L_Up         = 'U',
+    L_Down       = 'D',
+    L_Middle     = 'M',
+    L_Equator    = 'E',
+    L_Horizontal = 'H',
+    L_Standing   = 'S',
+    L_CubeX      = 'x',
+    L_CubeY      = 'y',
+    L_CubeZ      = 'z'
 };
 
-enum class LayerLetterIn
+enum LayerIn
 {
-    Left  = 'l',
-    Front = 'f',
-    Right = 'r',
-    Back  = 'b',
-    Up    = 'u',
-    Down  = 'd'
-};
-
-enum class Rotation
-{
-    Clockwise,
-    CounterClockwise,
-    Turn180
+    Li_Left  = 'l',
+    Li_Front = 'f',
+    Li_Right = 'r',
+    Li_Back  = 'b',
+    Li_Up    = 'u',
+    Li_Down  = 'd'
 };
 
 const char SYMBOL_COUNTER_CLOCKWISE = '\'';
