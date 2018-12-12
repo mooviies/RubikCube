@@ -40,7 +40,7 @@ void RubiksCubeView::initializeGL()
 
     f->glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
-    f->glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    f->glClearColor(0.95f, 0.95f, 0.99f, 1.0f);
     f->glClearDepthf(2000.0f);
 }
 

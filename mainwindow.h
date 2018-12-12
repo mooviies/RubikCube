@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QList>
 #include <QPushButton>
+#include <QSettings>
 
 #include "rubikscube.h"
 
@@ -74,6 +75,8 @@ private:
 
     int _currentCommand;
     QList<int> _history;
+
+    QSettings _settings;
 };
 
 #endif // MAINWINDOW_H

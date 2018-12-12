@@ -1,14 +1,16 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
+#include <QString>
+
 enum Color
 {
-    Green  = 0x49b849,
-    Red    = 0xdb261b,
-    Yellow = 0xddd101,
-    White  = 0xd4cfd5,
-    Blue   = 0x0281c8,
-    Orange = 0xf58220,
+    Green  = 0x53D151,
+    Red    = 0xDB2617,
+    Yellow = 0xF2F70C,
+    White  = 0xFFFFFF,
+    Blue   = 0x026CDB,
+    Orange = 0xFF8E07,
     Black  = 0x000000
 };
 
@@ -89,5 +91,8 @@ const int MIN_SIZE = 1;
 const int MAX_SIZE = 100;
 
 const float ROTATION_SPEED = 6;
+
+const QString SETTINGS_KEY_SIZE = "general/size";
+const QString SETTINGS_KEY_SAVE = "genreal/save";
 
 #endif // CONSTANTS_H

@@ -4,21 +4,21 @@
 #include <QRegularExpression>
 #include <QInputDialog>
 #include <QRandomGenerator>
+#include <QFileDialog>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::MainWindow)
+    ui(new Ui::MainWindow),
+    _settings("mooviies", "VirtualRubiksCube")
 {
     ui->setupUi(this);
 
     connect(ui->actionNew, SIGNAL(triggered(bool)), ui->pushButtonNew, SLOT(click()));
     connect(ui->actionReset, SIGNAL(triggered(bool)), ui->pushButtonReset, SLOT(click()));
-    connect(ui->actionSave, SIGNAL(triggered(bool)), ui->pushButtonSave, SLOT(click()));
-    connect(ui->actionLoad, SIGNAL(triggered(bool)), ui->pushButtonLoad, SLOT(click()));
+    connect(ui->actionSave, SIGNAL(triggered(bool)), this, SLOT(save()));
+    connect(ui->actionLoad, SIGNAL(triggered(bool)), this, SLOT(load()));
 
     connect(ui->pushButtonNew, SIGNAL(clicked(bool)), this, SLOT(newCube()));
-    connect(ui->pushButtonSave, SIGNAL(clicked(bool)), this, SLOT(save()));
-    connect(ui->pushButtonLoad, SIGNAL(clicked(bool)), this, SLOT(load()));
     connect(ui->pushButtonReset, SIGNAL(clicked(bool)), this, SLOT(reset()));
     connect(ui->pushButtonExecute, SIGNAL(clicked(bool)), this, SLOT(execute()));
     connect(ui->pushButtonScramble, SIGNAL(clicked(bool)), this, SLOT(scramble()));
@@ -68,7 +68,7 @@ MainWindow::MainWindow(QWidget *parent) :
     _groupB.append(ui->control_u);
     _groupB.append(ui->control_d);
 
-    setCube(new RubiksCube(3));
+    setCube(new RubiksCube(_settings.value(SETTINGS_KEY_SIZE, 3).toInt()));
 
     _currentCommand = 0;
 }
@@ -234,17 +234,67 @@ void MainWindow::newCube()
     {
         delete _cube;
         setCube(new RubiksCube(size));
+        _settings.setValue(SETTINGS_KEY_SIZE, size);
     }
 }
 
 void MainWindow::save()
 {
+    QString filename = QFileDialog::getSaveFileName(this, tr("Save Cube"), _settings.value(SETTINGS_KEY_SAVE, QDir::currentPath()).toString(), tr("Text files (*.txt)"));
+    if(!filename.isEmpty())
+    {
+        QFileInfo info(filename);
+        _settings.setValue(SETTINGS_KEY_SAVE, info.absoluteDir().absolutePath());
 
+        QFile file(filename);
+        if(info.exists())
+            file.remove();
+
+        if(!file.open(QIODevice::WriteOnly |  QIODevice::Text))
+            return;
+
+        QTextStream out(&file);
+        out << "cubesize=" << QVariant(_cube->size()).toString() << "\n";
+        out << ui->textEditHistory->toPlainText();
+        file.close();
+    }
 }
 
 void MainWindow::load()
 {
+    QString filename = QFileDialog::getOpenFileName(this, tr("Open Cube"), _settings.value(SETTINGS_KEY_SAVE, QDir::currentPath()).toString(), tr("Text files (*.txt)"));
+    if(!filename.isEmpty())
+    {
+        QFileInfo info(filename);
+        if(info.exists())
+        {
+            _settings.setValue(SETTINGS_KEY_SAVE, info.absoluteDir().absolutePath());
+            ui->textEditHistory->clear();
+            ui->textEditActions->clear();
+            QFile file(filename);
+            if(!file.open(QIODevice::ReadOnly |  QIODevice::Text))
+                return;
 
+            QTextStream in(&file);
+            QString sizeStr = file.readLine();
+            if(sizeStr.contains("cubesize="))
+            {
+                int size = sizeStr.remove("cubesize=").toInt();
+                if(size >= 2 && size <= 100)
+                    setCube(new RubiksCube(size));
+            }
+            else
+            {
+                ui->textEditActions->append(sizeStr);
+            }
+
+            while(!in.atEnd())
+            {
+                ui->textEditActions->append(in.readLine());
+            }
+            file.close();
+        }
+    }
 }
 
 void MainWindow::reset()
@@ -259,11 +309,12 @@ void MainWindow::execute()
     auto commands = getCommands(ui->textEditActions->toPlainText());
     rotate(commands);
 
-    ui->textEditHistory->append(ui->textEditActions->toPlainText() + "\n");
+    ui->textEditHistory->append(ui->textEditActions->toPlainText());
 }
 
 void MainWindow::scramble()
 {
+    ui->tabWidget->setCurrentIndex(0);
     ui->textEditActions->clear();
     QString expr;
 
@@ -423,7 +474,7 @@ void MainWindow::rotateWithControls(int flags)
         expr.append(SYMBOL_180);
 
     if(rotate(flags))
-        ui->textEditHistory->append(expr + "\n");
+        ui->textEditHistory->append(expr);
 }
 
 void MainWindow::rotateClockwise()
