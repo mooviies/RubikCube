@@ -1,3 +1,23 @@
+/*
+    Virtual Rubik's Cube is a tool to explore Rubik's cubes of any sizes.
+    Copyright (C) 2018 mooviies
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+    https://github.com/mooviies/RubikCube
+*/
+
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
@@ -17,6 +37,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionReset, SIGNAL(triggered(bool)), ui->pushButtonReset, SLOT(click()));
     connect(ui->actionSave, SIGNAL(triggered(bool)), this, SLOT(save()));
     connect(ui->actionLoad, SIGNAL(triggered(bool)), this, SLOT(load()));
+    //connect(ui->actionUndo, SIGNAL(triggered(bool)), this, SLOT(undo()));
+    //connect(ui->actionRedo, SIGNAL(triggered(bool)), this, SLOT(redo()));
 
     connect(ui->pushButtonNew, SIGNAL(clicked(bool)), this, SLOT(newCube()));
     connect(ui->pushButtonReset, SIGNAL(clicked(bool)), this, SLOT(reset()));
@@ -69,8 +91,6 @@ MainWindow::MainWindow(QWidget *parent) :
     _groupB.append(ui->control_d);
 
     setCube(new RubiksCube(_settings.value(SETTINGS_KEY_SIZE, 3).toInt()));
-
-    _currentCommand = 0;
 }
 
 MainWindow::~MainWindow()
@@ -81,18 +101,28 @@ MainWindow::~MainWindow()
 
 bool MainWindow::rotate(int flags)
 {
-    return _cube->rotate(flags, ui->checkBoxFastMode->isChecked());
+    if(_cube->rotate(flags, ui->checkBoxFastMode->isChecked()))
+    {
+        addToHistory(flags);
+        return true;
+    }
+    return false;
 }
 
 bool MainWindow::rotate(const QList<int>& flagsList)
 {
-    return _cube->rotate(flagsList, ui->checkBoxFastMode->isChecked());
+    if(_cube->rotate(flagsList, ui->checkBoxFastMode->isChecked()))
+    {
+        addToHistory(flagsList);
+        return true;
+    }
+    return false;
 }
 
 void MainWindow::setCube(RubiksCube *cube)
 {
     _history.clear();
-    _currentCommand = 0;
+    _currentCommand = -1;
     ui->textEditHistory->clear();
 
     _cube = cube;
@@ -226,6 +256,37 @@ QList<int> MainWindow::getCommands(const QString& expression)
     return commands;
 }
 
+void MainWindow::addToHistory(int flags)
+{
+    if(_currentCommand < _history.size() - 1)
+    {
+        int toRemove = _history.size() - _currentCommand - 1;
+        for(int i = 0; i < toRemove; i++)
+            _history.removeLast();
+    }
+    _history.append(flags);
+    _currentCommand = _history.size() - 1;
+    ui->actionUndo->setEnabled(true);
+    ui->actionRedo->setEnabled(false);
+}
+
+void MainWindow::addToHistory(const QList<int>& flagsList)
+{
+    if(_currentCommand < _history.size() - 1)
+    {
+        int toRemove = _history.size() - _currentCommand - 1;
+        for(int i = 0; i < toRemove; i++)
+            _history.removeLast();
+    }
+
+    foreach(auto flags, flagsList)
+        _history.append(flags);
+
+    _currentCommand = _history.size() - 1;
+    ui->actionUndo->setEnabled(true);
+    ui->actionRedo->setEnabled(false);
+}
+
 void MainWindow::newCube()
 {
     bool ok = false;
@@ -302,6 +363,44 @@ void MainWindow::reset()
     int size = _cube->size();
     delete _cube;
     setCube(new RubiksCube(size));
+}
+
+void MainWindow::undo()
+{
+    /*if(_currentCommand >= 0 && _history.size() > 0)
+    {
+        ui->actionRedo->setEnabled(true);
+        int flags = _history[_currentCommand--];
+        if(flags & RotationComponent::Clockwise)
+        {
+            flags ^= RotationComponent::Clockwise;
+            flags |= RotationComponent::CounterClockwise;
+        }
+        else if(flags & RotationComponent::CounterClockwise)
+        {
+            flags ^= RotationComponent::CounterClockwise;
+            flags |= RotationComponent::Clockwise;
+        }
+        if(!_cube->rotate(flags))
+        {
+
+        }
+    }
+    else
+        ui->actionUndo->setEnabled(false);*/
+}
+
+void MainWindow::redo()
+{
+    /*if(_currentCommand < _history.size() - 1)
+    {
+        ui->actionUndo->setEnabled(true);
+        _cube->rotate(_history[_currentCommand++]);
+    }
+    else
+    {
+        ui->actionRedo->setEnabled(false);
+    }*/
 }
 
 void MainWindow::execute()
