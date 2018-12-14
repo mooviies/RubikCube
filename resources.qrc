@@ -2,7 +2,6 @@
     <qresource prefix="/">
         <file>shaders/simple.frag</file>
         <file>shaders/simple.vert</file>
-        <file>shaders/bordergeo.vert</file>
         <file>shaders/border.frag</file>
         <file>shaders/border.vert</file>
         <file>images/rubik.png</file>

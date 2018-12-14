@@ -173,13 +173,6 @@
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_3">
             <item>
-             <widget class="QCheckBox" name="checkBoxFastMode">
-              <property name="text">
-               <string>FastMode</string>
-              </property>
-             </widget>
-            </item>
-            <item>
              <widget class="QPushButton" name="pushButtonReverse">
               <property name="text">
                <string>Reverse</string>
@@ -1078,6 +1071,7 @@
     <property name="title">
      <string>Edit</string>
     </property>
+    <addaction name="actionFastMode"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -1198,6 +1192,14 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+N</string>
+   </property>
+  </action>
+  <action name="actionFastMode">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Fast Mode</string>
    </property>
   </action>
  </widget>

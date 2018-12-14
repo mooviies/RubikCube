@@ -42,10 +42,6 @@ void RubiksCubeView::setCube(RubiksCube *cube)
     _cube = cube;
 }
 
-void RubiksCubeView::keyPressEvent(QKeyEvent *event)
-{
-}
-
 void RubiksCubeView::initializeGL()
 {
     QOpenGLFunctions *f = QOpenGLContext::currentContext()->functions();

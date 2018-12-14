@@ -65,6 +65,7 @@ enum RotationComponent
     Clockwise        = 0x0400000,
     CounterClockwise = 0x0800000,
     Turn180          = 0x1000000,
+    ReverseMask      = 0x0C00000,
     NbLayerMask      = 0x00000FF,
     ComponentsMask   = 0xFFFFF00,
     MandatoryMaskA   = 0x01FFF00,
@@ -113,6 +114,7 @@ const int MAX_SIZE = 100;
 const float ROTATION_SPEED = 6;
 
 const QString SETTINGS_KEY_SIZE = "general/size";
-const QString SETTINGS_KEY_SAVE = "genreal/save";
+const QString SETTINGS_KEY_SAVE = "general/save";
+const QString SETTINGS_KEY_FAST_MODE = "options/fastmode";
 
 #endif // CONSTANTS_H

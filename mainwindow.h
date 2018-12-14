@@ -25,8 +25,10 @@
 #include <QList>
 #include <QPushButton>
 #include <QSettings>
+#include <QDialog>
 
 #include "rubikscube.h"
+#include "ui_dialoghelp.h"
 
 namespace Ui {
 class MainWindow;
@@ -45,7 +47,6 @@ public:
     void setCube(RubiksCube *cube);
 
 protected:
-    void keyPressEvent(QKeyEvent *event) override;
     QList<int> getCommands(const QString& expression);
     void addToHistory(int flags);
     void addToHistory(const QList<int>& flagsList);
@@ -57,6 +58,8 @@ private slots:
     void reset();
     void undo();
     void redo();
+    void fastmode(bool activated);
+    void about();
 
     void execute();
 
@@ -101,6 +104,8 @@ private:
     QList<int> _history;
 
     QSettings _settings;
+    Ui::Dialog _aboutUI;
+    QDialog _about;
 };
 
 #endif // MAINWINDOW_H

@@ -38,7 +38,6 @@ public:
     ~RubiksCubeView();
 
     void setCube(RubiksCube* cube);
-    void keyPressEvent(QKeyEvent *event) override;
 
 protected:
     void initializeGL() override;

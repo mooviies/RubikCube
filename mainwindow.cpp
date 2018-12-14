@@ -32,11 +32,14 @@ MainWindow::MainWindow(QWidget *parent) :
     _settings("mooviies", "VirtualRubiksCube")
 {
     ui->setupUi(this);
+    _aboutUI.setupUi(&_about);
 
     connect(ui->actionNew, SIGNAL(triggered(bool)), ui->pushButtonNew, SLOT(click()));
     connect(ui->actionReset, SIGNAL(triggered(bool)), ui->pushButtonReset, SLOT(click()));
     connect(ui->actionSave, SIGNAL(triggered(bool)), this, SLOT(save()));
     connect(ui->actionLoad, SIGNAL(triggered(bool)), this, SLOT(load()));
+    connect(ui->actionFastMode, SIGNAL(toggled(bool)), this, SLOT(fastmode(bool)));
+    connect(ui->actionAbout, SIGNAL(triggered(bool)), this, SLOT(about()));
     //connect(ui->actionUndo, SIGNAL(triggered(bool)), this, SLOT(undo()));
     //connect(ui->actionRedo, SIGNAL(triggered(bool)), this, SLOT(redo()));
 
@@ -91,6 +94,8 @@ MainWindow::MainWindow(QWidget *parent) :
     _groupB.append(ui->control_d);
 
     setCube(new RubiksCube(_settings.value(SETTINGS_KEY_SIZE, 3).toInt()));
+
+    ui->actionFastMode->setChecked(_settings.value(SETTINGS_KEY_FAST_MODE, false).toBool());
 }
 
 MainWindow::~MainWindow()
@@ -101,7 +106,7 @@ MainWindow::~MainWindow()
 
 bool MainWindow::rotate(int flags)
 {
-    if(_cube->rotate(flags, ui->checkBoxFastMode->isChecked()))
+    if(_cube->rotate(flags, ui->actionFastMode->isChecked()))
     {
         addToHistory(flags);
         return true;
@@ -111,7 +116,7 @@ bool MainWindow::rotate(int flags)
 
 bool MainWindow::rotate(const QList<int>& flagsList)
 {
-    if(_cube->rotate(flagsList, ui->checkBoxFastMode->isChecked()))
+    if(_cube->rotate(flagsList, ui->actionFastMode->isChecked()))
     {
         addToHistory(flagsList);
         return true;
@@ -128,11 +133,6 @@ void MainWindow::setCube(RubiksCube *cube)
     _cube = cube;
     ui->openGLWidget->setCube(_cube);
     ui->control_nbLayer->setMaximum(_cube->maxLayer());
-}
-
-void MainWindow::keyPressEvent(QKeyEvent *event)
-{
-    ui->openGLWidget->keyPressEvent(event);
 }
 
 QList<int> MainWindow::getCommands(const QString& expression)
@@ -401,6 +401,16 @@ void MainWindow::redo()
     {
         ui->actionRedo->setEnabled(false);
     }*/
+}
+
+void MainWindow::fastmode(bool activated)
+{
+    _settings.setValue(SETTINGS_KEY_FAST_MODE, activated);
+}
+
+void MainWindow::about()
+{
+    _about.exec();
 }
 
 void MainWindow::execute()

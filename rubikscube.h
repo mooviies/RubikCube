@@ -43,7 +43,7 @@ public:
     float width() const { return _width; }
     inline float getID(int i, int j, int k) const { return j + k * _size + i * _size * _size; }
 
-    inline bool isInitialized() const { return _shaderProgram != nullptr; }
+    inline bool isInitialized() const { return _cubeShaderProgram != nullptr; }
 
     void init();
     void reset();
@@ -74,6 +74,7 @@ private:
     QList<int> _commands;
     int _currentCommand;
 
+    int _rotationFlags;
     bool _isAnimating;
     bool _fastMode;
 
@@ -89,9 +90,19 @@ private:
     QMap<RotationComponent, int> _insideOffset;
     QMap<RotationComponent, int> _insidePosition;
 
-    QOpenGLShaderProgram *_shaderProgram;
-    QOpenGLBuffer _buffer;
-    QOpenGLVertexArrayObject _vao;
+    QOpenGLShaderProgram *_cubeShaderProgram;
+    QOpenGLShaderProgram *_stripeShaderProgram;
+    QOpenGLBuffer _cubeBuffer;
+    QOpenGLVertexArrayObject _cubeVAO;
+
+    QOpenGLBuffer _equatorBuffer;
+    QOpenGLVertexArrayObject _equatorVAO;
+
+    QOpenGLBuffer _middleBuffer;
+    QOpenGLVertexArrayObject _middleVAO;
+
+    QOpenGLBuffer _standingBuffer;
+    QOpenGLVertexArrayObject _standingVAO;
 
     float _currentRotation;
     float _targetRotation;
@@ -99,6 +110,12 @@ private:
     QVector3D _rotationVector;
     QMatrix4x4 _layerRotation;
     QMap<int, Color> _rotating;
+    QMatrix4x4 _stripTranslation;
+
+    int _stripProjectionMatrixID;
+    int _stripCameraMatrixID;
+    int _stripRotationMatrixID;
+    int _stripTranslationMatrixID;
 
     int _projectionMatrixID;
     int _cameraMatrixID;

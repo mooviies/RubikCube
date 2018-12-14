@@ -40,7 +40,8 @@ HEADERS += \
     cube.h
 
 FORMS += \
-        mainwindow.ui
+        mainwindow.ui \
+    dialoghelp.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
