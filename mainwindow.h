@@ -51,6 +51,10 @@ protected:
     void addToHistory(int flags);
     void addToHistory(const QList<int>& flagsList);
 
+    void moveEvent(QMoveEvent *event);
+    void resizeEvent(QResizeEvent *event);
+    void changeEvent(QEvent *event);
+
 private slots:
     void newCube();
     void save();
@@ -60,6 +64,8 @@ private slots:
     void redo();
     void fastmode(bool activated);
     void about();
+    void resetSettings();
+    void loadSettings();
 
     void execute();
 
@@ -106,6 +112,7 @@ private:
     QSettings _settings;
     Ui::Dialog _aboutUI;
     QDialog _about;
+    QRect _sizeBeforeMaximize;
 };
 
 #endif // MAINWINDOW_H

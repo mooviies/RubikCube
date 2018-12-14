@@ -25,6 +25,10 @@
 #include <QInputDialog>
 #include <QRandomGenerator>
 #include <QFileDialog>
+#include <QStyle>
+#include <QGuiApplication>
+#include <QScreen>
+#include <QWindowStateChangeEvent>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -40,6 +44,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionLoad, SIGNAL(triggered(bool)), this, SLOT(load()));
     connect(ui->actionFastMode, SIGNAL(toggled(bool)), this, SLOT(fastmode(bool)));
     connect(ui->actionAbout, SIGNAL(triggered(bool)), this, SLOT(about()));
+    connect(ui->actionResetSettings, SIGNAL(triggered(bool)), this, SLOT(resetSettings()));
     //connect(ui->actionUndo, SIGNAL(triggered(bool)), this, SLOT(undo()));
     //connect(ui->actionRedo, SIGNAL(triggered(bool)), this, SLOT(redo()));
 
@@ -94,8 +99,7 @@ MainWindow::MainWindow(QWidget *parent) :
     _groupB.append(ui->control_d);
 
     setCube(new RubiksCube(_settings.value(SETTINGS_KEY_SIZE, 3).toInt()));
-
-    ui->actionFastMode->setChecked(_settings.value(SETTINGS_KEY_FAST_MODE, false).toBool());
+    loadSettings();
 }
 
 MainWindow::~MainWindow()
@@ -287,6 +291,30 @@ void MainWindow::addToHistory(const QList<int>& flagsList)
     ui->actionRedo->setEnabled(false);
 }
 
+void MainWindow::moveEvent(QMoveEvent *event)
+{
+    if(!(this->windowState() & Qt::WindowMaximized))
+    {
+        _settings.setValue(SETTINGS_KEY_WINDOW_RECT, this->geometry());
+    }
+}
+
+void MainWindow::resizeEvent(QResizeEvent *event)
+{
+    _settings.setValue(SETTINGS_KEY_WINDOW_RECT, this->geometry());
+}
+
+void MainWindow::changeEvent(QEvent *event)
+{
+    if(event->type() == QEvent::WindowStateChange)
+    {
+        Qt::WindowStates state = this->windowState();
+        _settings.setValue(SETTINGS_KEY_WINDOW_STATE, (uint)state);
+        if(state & Qt::WindowMaximized)
+            _settings.setValue(SETTINGS_KEY_WINDOW_RECT, _sizeBeforeMaximize);
+    }
+}
+
 void MainWindow::newCube()
 {
     bool ok = false;
@@ -411,6 +439,22 @@ void MainWindow::fastmode(bool activated)
 void MainWindow::about()
 {
     _about.exec();
+}
+
+void MainWindow::resetSettings()
+{
+    _settings.clear();
+    loadSettings();
+}
+
+void MainWindow::loadSettings()
+{
+    ui->actionFastMode->setChecked(_settings.value(SETTINGS_KEY_FAST_MODE, false).toBool());
+    setGeometry(_settings.value(SETTINGS_KEY_WINDOW_RECT,
+                                QStyle::alignedRect(Qt::LeftToRight, Qt::AlignCenter, this->minimumSize(), QGuiApplication::screens().first()->geometry())).toRect());
+
+    _sizeBeforeMaximize = this->geometry();
+    setWindowState((Qt::WindowState)_settings.value(SETTINGS_KEY_WINDOW_STATE, Qt::WindowNoState).toUInt());
 }
 
 void MainWindow::execute()

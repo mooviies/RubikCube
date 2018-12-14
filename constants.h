@@ -116,5 +116,7 @@ const float ROTATION_SPEED = 6;
 const QString SETTINGS_KEY_SIZE = "general/size";
 const QString SETTINGS_KEY_SAVE = "general/save";
 const QString SETTINGS_KEY_FAST_MODE = "options/fastmode";
+const QString SETTINGS_KEY_WINDOW_STATE = "window/state";
+const QString SETTINGS_KEY_WINDOW_RECT = "window/rect";
 
 #endif // CONSTANTS_H
