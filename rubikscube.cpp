@@ -22,11 +22,13 @@
 
 #include <QOpenGLFunctions>
 #include <QColor>
+#include <QWidget>
 #include <stdexcept>
 
 #include "cube.h"
+#include "rubikscubeview.h"
 
-RubiksCube::RubiksCube(int size)
+RubiksCube::RubiksCube(RubiksCubeView* parent, int size) : _parent(parent)
 {
     if(size < MIN_SIZE)
         _size = MIN_SIZE;
@@ -74,8 +76,13 @@ void RubiksCube::init()
     _stripeShaderProgram->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/border.vert");
     _stripeShaderProgram->addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/border.frag");
 
+    _debugShaderProgram = new QOpenGLShaderProgram();
+    _debugShaderProgram->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/debug.vert");
+    _debugShaderProgram->addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/debug.frag");
+
     _cubeShaderProgram->link();
     _stripeShaderProgram->link();
+    _debugShaderProgram->link();
 
     _projectionMatrixID = _cubeShaderProgram->uniformLocation("projection");
     _cameraMatrixID = _cubeShaderProgram->uniformLocation("camera");
@@ -86,6 +93,11 @@ void RubiksCube::init()
     _stripCameraMatrixID = _stripeShaderProgram->uniformLocation("camera");
     _stripRotationMatrixID = _stripeShaderProgram->uniformLocation("rotation");
     _stripTranslationMatrixID = _stripeShaderProgram->uniformLocation("translation");
+
+    _debugProjectionMatrixID = _debugShaderProgram->uniformLocation("projection");
+    _debugCameraMatrixID = _debugShaderProgram->uniformLocation("camera");
+    _debugTranslationMatrixID = _debugShaderProgram->uniformLocation("translation");
+
     create();
 }
 
@@ -580,8 +592,73 @@ void RubiksCube::display(QOpenGLFunctions *f, const QMatrix4x4 &projection, cons
     _cubeVAO.release();
     _cubeShaderProgram->release();
 
+    // Debug
+    _debugShaderProgram->bind();
+    _debugVAO.bind();
+
+    _debugShaderProgram->setUniformValue(_debugProjectionMatrixID, projection);
+    _debugShaderProgram->setUniformValue(_debugCameraMatrixID, camera);
+    _debugShaderProgram->setUniformValue(_debugTranslationMatrixID, _debugCubeTranslation);
+
+    f->glDrawArrays(GL_QUADS, 0, 24);
+
+    _debugVAO.release();
+    _debugShaderProgram->release();
+
     if(!_isAnimating && _currentCommand < _commands.size())
         rotate(_commands[_currentCommand++], _fastMode);
+}
+
+void RubiksCube::mouseReleaseEvent(QMouseEvent* event, const QMatrix4x4& projection, const QMatrix4x4& camera)
+{
+    QPoint mousePos = event->pos();
+    QVector4D rayClip((2.0f * float(mousePos.x())) / float(_parent->width()) - 1.0f,
+                      1.0f - (2.0f * float(mousePos.y())) / float(_parent->height()),
+                      -1.0f, 1.0f);
+
+    QVector4D rayEye = projection.inverted() * rayClip;
+    rayEye.setZ(-1.0f);
+    rayEye.setW(0.0f);
+
+    QVector3D rayWor = (camera.inverted() * rayEye).toVector3D().normalized();
+
+    float h = _width / 2.0f;
+    QVector3D origin = camera.inverted() * QVector3D(0, 0, 0);
+    QVector3D pointOnCube;
+    bool isOnCube = false;
+
+    QVector3D xpos = getHitPoint(QVector3D(-1, 0, 0), QVector3D(-h, 0, 0), origin, rayWor);
+    if(xpos.y() >= -h && xpos.y() <= h && xpos.z() >= -h && xpos.z() <= h)
+    {
+        isOnCube = true;
+        pointOnCube = xpos;
+    }
+    else
+    {
+        QVector3D ypos = getHitPoint(QVector3D(0, 1, 0), QVector3D(0, h, 0), origin, rayWor);
+        if(ypos.x() >= -h && ypos.x() <= h && ypos.z() >= -h && ypos.z() <= h)
+        {
+            isOnCube = true;
+            pointOnCube = ypos;
+        }
+        else
+        {
+            QVector3D zpos = getHitPoint(QVector3D(0, 0, 1), QVector3D(0, 0, h), origin, rayWor);
+            if(zpos.x() >= -h && zpos.x() <= h && zpos.y() >= -h && zpos.y() <= h)
+            {
+                isOnCube = true;
+                pointOnCube = zpos;
+            }
+        }
+    }
+
+    _debugCubeTranslation.setToIdentity();
+    if(isOnCube)
+    {
+        _debugCubeTranslation.translate(pointOnCube);
+    }
+
+    event->accept();
 }
 
 void RubiksCube::create()
@@ -696,12 +773,14 @@ void RubiksCube::buildBuffer()
     _equatorBuffer.create();
     _middleBuffer.create();
     _standingBuffer.create();
+    _debugBuffer.create();
 
     // Creating vertex arrays
     _cubeVAO.create();
     _equatorVAO.create();
     _middleVAO.create();
     _standingVAO.create();
+    _debugVAO.create();
 
     _cubeShaderProgram->bind();
     {
@@ -798,6 +877,30 @@ void RubiksCube::buildBuffer()
        _standingBuffer.release();
     }
     _stripeShaderProgram->release();
+
+    _debugShaderProgram->bind();
+    {
+        _debugBuffer.bind();
+        {
+            Cube cube(QVector3D(0, 0, 0), _width / 10.0);
+            cube.generate();
+            for(int i = 0; i < 24; i++)
+            {
+                _debugVertices[i] = cube.vertices()[i];
+            }
+
+            _debugVAO.bind();
+            _debugBuffer.setUsagePattern(QOpenGLBuffer::StaticDraw);
+            _debugBuffer.allocate(_debugVertices, sizeof(Vertex) * 24);
+
+            _debugShaderProgram->enableAttributeArray(0);
+            _debugShaderProgram->setAttributeBuffer(0, GL_FLOAT, Vertex::positionOffset(), Vertex::POSITION_TUPLE_SIZE, Vertex::stride());
+
+            _debugVAO.release();
+        }
+        _debugBuffer.release();
+    }
+    _debugShaderProgram->release();
 }
 
 void RubiksCube::clean()
@@ -855,4 +958,10 @@ void RubiksCube::setColor(Face face, int i, int j, Color color)
         _cubeBuffer.write(baseOffset + Vertex::rotatingOffset(), &tb, sizeOfInt);
         baseOffset += Vertex::stride();
     }
+}
+
+QVector3D RubiksCube::getHitPoint(const QVector3D& n, const QVector3D& p0, const QVector3D& l0, const QVector3D& ray)
+{
+    float t = QVector3D::dotProduct(p0 - l0, n) / QVector3D::dotProduct(ray, n);
+    return l0 + ray * t;
 }

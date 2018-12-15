@@ -30,6 +30,8 @@
 RubiksCubeView::RubiksCubeView(QWidget *parent) : QOpenGLWidget(parent)
 {
     _cube = nullptr;
+    _mouseIsInside = false;
+    setMouseTracking(true);
 }
 
 RubiksCubeView::~RubiksCubeView()
@@ -48,23 +50,17 @@ void RubiksCubeView::initializeGL()
 
     f->glEnable(GL_DEPTH_TEST);
     f->glEnable(GL_BLEND);
-    //f->glEnable(GL_MULTISAMPLE);
     f->glEnable(GL_POLYGON_SMOOTH);
+    f->glDepthFunc(GL_LEQUAL);
 
-    //f->glBlendFunc(GL_SRC_ALPHA_SATURATE, GL_ONE);
-    f->glDepthFunc(GL_LESS);
-
-    f->glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-
-    f->glClearColor(0.95f, 0.95f, 0.99f, 1.0f);
-    f->glClearDepthf(2000.0f);
+    f->glClearColor(0.96f, 0.96f, 1.0f, 1.0f);
 }
 
 void RubiksCubeView::resizeGL(int w, int h)
 {
     _aspectRatio = w / float(h);
     _projection.setToIdentity();
-    _projection.perspective(45.0f, _aspectRatio, 0.01f, 100.0f);
+    _projection.perspective(45.0f, _aspectRatio, DEPTH_NEAR, DEPTH_FAR);
 }
 
 void RubiksCubeView::paintGL()
@@ -87,6 +83,31 @@ void RubiksCubeView::paintGL()
     _cube->display(f, _projection, _camera);
 
     update();
+}
+
+void RubiksCubeView::enterEvent(QEvent *event)
+{
+}
+
+void RubiksCubeView::leaveEvent(QEvent *event)
+{
+    _mouseIsInside = false;
+}
+
+void RubiksCubeView::mouseMoveEvent(QMouseEvent *event)
+{
+    _mouseIsInside = true;
+    _mousePosition = event->pos();
+}
+
+void RubiksCubeView::mousePressEvent(QMouseEvent *event)
+{
+
+}
+
+void RubiksCubeView::mouseReleaseEvent(QMouseEvent *event)
+{
+    _cube->mouseReleaseEvent(event, _projection, _camera);
 }
 
 void RubiksCubeView::clean()

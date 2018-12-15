@@ -98,7 +98,7 @@ MainWindow::MainWindow(QWidget *parent) :
     _groupB.append(ui->control_u);
     _groupB.append(ui->control_d);
 
-    setCube(new RubiksCube(_settings.value(SETTINGS_KEY_SIZE, 3).toInt()));
+    setCube(new RubiksCube(ui->openGLWidget, _settings.value(SETTINGS_KEY_SIZE, 3).toInt()));
     loadSettings();
 }
 
@@ -322,7 +322,7 @@ void MainWindow::newCube()
     if(ok)
     {
         delete _cube;
-        setCube(new RubiksCube(size));
+        setCube(new RubiksCube(ui->openGLWidget, size));
         _settings.setValue(SETTINGS_KEY_SIZE, size);
     }
 }
@@ -370,7 +370,7 @@ void MainWindow::load()
             {
                 int size = sizeStr.remove("cubesize=").toInt();
                 if(size >= 2 && size <= 100)
-                    setCube(new RubiksCube(size));
+                    setCube(new RubiksCube(ui->openGLWidget, size));
             }
             else
             {
@@ -390,7 +390,7 @@ void MainWindow::reset()
 {
     int size = _cube->size();
     delete _cube;
-    setCube(new RubiksCube(size));
+    setCube(new RubiksCube(ui->openGLWidget, size));
 }
 
 void MainWindow::undo()

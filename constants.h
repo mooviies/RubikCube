@@ -31,7 +31,8 @@ enum Color
     White  = 0xFFFFFF,
     Blue   = 0x026CDB,
     Orange = 0xFF8E07,
-    Black  = 0x000000
+    Black  = 0x000000,
+    Error  = 0xFF0DFF
 };
 
 enum class Face
@@ -118,5 +119,8 @@ const QString SETTINGS_KEY_SAVE = "general/save";
 const QString SETTINGS_KEY_FAST_MODE = "options/fastmode";
 const QString SETTINGS_KEY_WINDOW_STATE = "window/state";
 const QString SETTINGS_KEY_WINDOW_RECT = "window/rect";
+
+const float DEPTH_NEAR = 0.1f;
+const float DEPTH_FAR = 30.0f;
 
 #endif // CONSTANTS_H

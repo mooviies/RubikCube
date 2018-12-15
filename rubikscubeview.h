@@ -38,11 +38,20 @@ public:
     ~RubiksCubeView();
 
     void setCube(RubiksCube* cube);
+    bool mouseIsInside() const { return _mouseIsInside; }
+    QPoint mousePosition() const { return _mousePosition; }
 
 protected:
     void initializeGL() override;
     void resizeGL(int w, int h) override;
     void paintGL() override;
+
+    void enterEvent(QEvent *event) override;
+    void leaveEvent(QEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
 
 private:
     void clean();
@@ -54,6 +63,9 @@ private:
     QMatrix4x4 _projection;
 
     float _aspectRatio;
+
+    bool _mouseIsInside;
+    QPoint _mousePosition;
 };
 
 #endif // RUBIKCUBEVIEW_H

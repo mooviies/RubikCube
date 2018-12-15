@@ -7,5 +7,7 @@
         <file>images/rubik.png</file>
         <file>images/refresh-arrow.png</file>
         <file>images/undo-arrow.png</file>
+        <file>shaders/debug.frag</file>
+        <file>shaders/debug.vert</file>
     </qresource>
 </RCC>

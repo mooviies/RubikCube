@@ -27,15 +27,18 @@
 #include <QOpenGLFunctions>
 #include <QMap>
 #include <QVector3D>
+#include <QMouseEvent>
 #include <cmath>
 
 #include "constants.h"
 #include "vertex.h"
 
+class RubiksCubeView;
+
 class RubiksCube
 {
 public:
-    RubiksCube(int size);
+    RubiksCube(RubiksCubeView* parent, int size);
     ~RubiksCube();
 
     int maxLayer() const { return _maxLayer; }
@@ -50,6 +53,7 @@ public:
     bool rotate(const QList<int>& flagsList, bool fast = false);
     bool rotate(int flags, bool fast = false);
     void display(QOpenGLFunctions *f, const QMatrix4x4& projection, const QMatrix4x4& camera);
+    void mouseReleaseEvent(QMouseEvent* event, const QMatrix4x4& projection, const QMatrix4x4& camera);
 
 protected:
     void rotateFace(Face faceID, int flags);
@@ -67,7 +71,10 @@ private:
     void setColor(int offset, Color color);
     void setColor(Face face, int i, int j, Color color);
 
+    QVector3D getHitPoint(const QVector3D& n, const QVector3D& p0, const QVector3D& l0, const QVector3D& ray);
+
 private:
+    RubiksCubeView* _parent;
     Face ***_cube;
     Vertex *_vertices;
 
@@ -92,6 +99,8 @@ private:
 
     QOpenGLShaderProgram *_cubeShaderProgram;
     QOpenGLShaderProgram *_stripeShaderProgram;
+    QOpenGLShaderProgram *_debugShaderProgram;
+
     QOpenGLBuffer _cubeBuffer;
     QOpenGLVertexArrayObject _cubeVAO;
 
@@ -103,6 +112,9 @@ private:
 
     QOpenGLBuffer _standingBuffer;
     QOpenGLVertexArrayObject _standingVAO;
+
+    QOpenGLBuffer _debugBuffer;
+    QOpenGLVertexArrayObject _debugVAO;
 
     float _currentRotation;
     float _targetRotation;
@@ -121,6 +133,13 @@ private:
     int _cameraMatrixID;
     int _rotationMatrixID;
     int _borderWidthMatrixID;
+
+    int _debugProjectionMatrixID;
+    int _debugCameraMatrixID;
+    int _debugTranslationMatrixID;
+
+    Vertex _debugVertices[24];
+    QMatrix4x4 _debugCubeTranslation;
 };
 
 #endif // RUBIKSCUBE_H
