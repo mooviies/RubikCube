@@ -24,6 +24,7 @@
 #include <QColor>
 #include <QWidget>
 #include <stdexcept>
+#include <QGuiApplication>
 
 #include "cube.h"
 #include "rubikscubeview.h"
@@ -40,6 +41,7 @@ RubiksCube::RubiksCube(RubiksCubeView* parent, int size) : _parent(parent)
     _currentCommand = 0;
     _maxLayer = _size / 2;
     _cubeShaderProgram = nullptr;
+    _borderWidth = 0.015f;
 }
 
 RubiksCube::~RubiksCube()
@@ -47,7 +49,7 @@ RubiksCube::~RubiksCube()
     clean();
 }
 
-void RubiksCube::init()
+void RubiksCube::init(const QMatrix4x4 &camera, const QMatrix4x4 &projection)
 {
     _alternateFace.clear();
     for(int i = 0; i < NUMBER_SIDE; i++)
@@ -84,27 +86,13 @@ void RubiksCube::init()
     _stripeShaderProgram->link();
     _debugShaderProgram->link();
 
-    _projectionMatrixID = _cubeShaderProgram->uniformLocation("projection");
-    _cameraMatrixID = _cubeShaderProgram->uniformLocation("camera");
-    _rotationMatrixID = _cubeShaderProgram->uniformLocation("rotation");
-    _borderWidthMatrixID = _cubeShaderProgram->uniformLocation("borderWidth");
-
-    _stripProjectionMatrixID = _stripeShaderProgram->uniformLocation("projection");
-    _stripCameraMatrixID = _stripeShaderProgram->uniformLocation("camera");
-    _stripRotationMatrixID = _stripeShaderProgram->uniformLocation("rotation");
-    _stripTranslationMatrixID = _stripeShaderProgram->uniformLocation("translation");
-
-    _debugProjectionMatrixID = _debugShaderProgram->uniformLocation("projection");
-    _debugCameraMatrixID = _debugShaderProgram->uniformLocation("camera");
-    _debugTranslationMatrixID = _debugShaderProgram->uniformLocation("translation");
-
-    create();
+    create(camera, projection);
 }
 
-void RubiksCube::reset()
+void RubiksCube::reset(const QMatrix4x4 &camera, const QMatrix4x4 &projection)
 {
     clean();
-    init();
+    init(camera, projection);
 }
 
 bool RubiksCube::rotate(const QList<int>& flagsList, bool fastMode)
@@ -143,12 +131,12 @@ bool RubiksCube::rotate(int flags, bool fastMode)
     if(layerPos <= 0)
         layerPos = 1;
     else if(layerPos > _size / 2 + 1)
-        layerPos = _size / 2 + 1;
+        return false;
 
     Face rotationFace = Face::Up;
     _rotating.clear();
 
-    _cubeBuffer.bind();
+    _cubeModel->bindBuffer();
 
     if(components & RotationComponent::WholeCube)
     {
@@ -225,7 +213,7 @@ bool RubiksCube::rotate(int flags, bool fastMode)
         }
     }
 
-    _cubeBuffer.release();
+    _cubeModel->releaseBuffer();
 
     if(_fastMode)
         return true;
@@ -461,17 +449,17 @@ void RubiksCube::rotateLayer(Face faceID, int flags)
 
 void RubiksCube::completeRotation()
 {
-    _cubeBuffer.bind();
+    _cubeModel->bindBuffer();
     foreach(int key, _rotating.keys())
     {
         setColor(key, _rotating[key]);
     }
-    _cubeBuffer.release();
+    _cubeModel->releaseBuffer();
     _isAnimating = false;
     _rotating.clear();
 }
 
-void RubiksCube::display(QOpenGLFunctions *f, const QMatrix4x4 &projection, const QMatrix4x4 &camera)
+void RubiksCube::draw()
 {
     if(_isAnimating)
     {
@@ -487,123 +475,72 @@ void RubiksCube::display(QOpenGLFunctions *f, const QMatrix4x4 &projection, cons
         }
 
         int nbLayer = _rotationFlags & RotationComponent::NbLayerMask;
-        if(nbLayer > 1 && !(_rotationFlags & RotationComponent::Wide))
+        if(nbLayer > 1 && nbLayer < _size && !(_rotationFlags & RotationComponent::Wide))
         {
-            _stripeShaderProgram->bind();
+            int flags = _rotationFlags;
+            int rotation = flags & RotationComponent::MandatoryMaskA;
+            switch(rotation)
             {
-                int flags = _rotationFlags;
-                int rotation = flags & RotationComponent::MandatoryMaskA;
-                switch(rotation)
-                {
-                case RotationComponent::Up:
-                    rotation = RotationComponent::Down;
-                    nbLayer = _size - nbLayer + 1;
-                    break;
-                case RotationComponent::Right:
-                    rotation = RotationComponent::Left;
-                    nbLayer = _size - nbLayer + 1;
-                    break;
-                case RotationComponent::Front:
-                    rotation = RotationComponent::Back;
-                    nbLayer = _size - nbLayer + 1;
-                    break;
-                case RotationComponent::Horizontal:
-                    rotation = RotationComponent::Equator;
-                    nbLayer = _size - nbLayer + 1;
-                    break;
-                default:
-                    break;
-                }
-
-                switch(rotation)
-                {
-                case RotationComponent::Equator:
-                    nbLayer = _size / 2;
-                    rotation = RotationComponent::Down;
-                    break;
-                case RotationComponent::Middle:
-                    nbLayer = _size / 2;
-                    rotation = RotationComponent::Left;
-                    break;
-                case RotationComponent::Standing:
-                    nbLayer = _size / 2;
-                    rotation = RotationComponent::Back;
-                    break;
-                }
-
-                _stripeShaderProgram->setUniformValue(_stripProjectionMatrixID, projection);
-                _stripeShaderProgram->setUniformValue(_stripCameraMatrixID, camera);
-                _stripeShaderProgram->setUniformValue(_stripRotationMatrixID, _layerRotation);
-                _stripTranslation.setToIdentity();
-
-                switch(rotation)
-                {
-                case RotationComponent::Down:
-                {
-                    _equatorVAO.bind();
-                    {
-                        _stripTranslation.translate(0, _cellWidth * (nbLayer - 1), 0);
-                        _stripeShaderProgram->setUniformValue(_stripTranslationMatrixID, _stripTranslation);
-                        f->glDrawArrays(GL_QUADS, 0, 8);
-                    }
-                    _equatorVAO.release();
-                    break;
-                }
-                case RotationComponent::Left:
-                {
-                    _middleVAO.bind();
-                    {
-                        _stripTranslation.translate(_cellWidth * (nbLayer - 1), 0, 0);
-                        _stripeShaderProgram->setUniformValue(_stripTranslationMatrixID, _stripTranslation);
-                        f->glDrawArrays(GL_QUADS, 0, 8);
-                    }
-                    _middleVAO.release();
-                    break;
-                }
-                case RotationComponent::Back:
-                {
-                    _standingVAO.bind();
-                    {
-                        _stripTranslation.translate(0, 0, _cellWidth * (nbLayer - 1));
-                        _stripeShaderProgram->setUniformValue(_stripTranslationMatrixID, _stripTranslation);
-                        f->glDrawArrays(GL_QUADS, 0, 8);
-                    }
-                    _standingVAO.release();
-                    break;
-                }
-                default:
-                    break;
-                }
+            case RotationComponent::Up:
+                rotation = RotationComponent::Down;
+                nbLayer = _size - nbLayer + 1;
+                break;
+            case RotationComponent::Right:
+                rotation = RotationComponent::Left;
+                nbLayer = _size - nbLayer + 1;
+                break;
+            case RotationComponent::Front:
+                rotation = RotationComponent::Back;
+                nbLayer = _size - nbLayer + 1;
+                break;
+            case RotationComponent::Horizontal:
+                rotation = RotationComponent::Equator;
+                nbLayer = _size - nbLayer + 1;
+                break;
+            default:
+                break;
             }
-            _stripeShaderProgram->release();
+
+            switch(rotation)
+            {
+            case RotationComponent::Equator:
+                nbLayer = _size / 2;
+                rotation = RotationComponent::Down;
+                break;
+            case RotationComponent::Middle:
+                nbLayer = _size / 2;
+                rotation = RotationComponent::Left;
+                break;
+            case RotationComponent::Standing:
+                nbLayer = _size / 2;
+                rotation = RotationComponent::Back;
+                break;
+            }
+
+            _stripTranslation.setToIdentity();
+
+            switch(rotation)
+            {
+            case RotationComponent::Down:
+                _stripTranslation.translate(0, _cellWidth * (nbLayer - 1), 0);
+                _equatorFillModel->draw();
+                break;
+            case RotationComponent::Left:
+                _stripTranslation.translate(_cellWidth * (nbLayer - 1), 0, 0);
+                _middleFillModel->draw();
+                break;
+            case RotationComponent::Back:
+                _stripTranslation.translate(0, 0, _cellWidth * (nbLayer - 1));
+                _standingFillModel->draw();
+                break;
+            default:
+                break;
+            }
         }
     }
 
-    _cubeShaderProgram->bind();
-    _cubeVAO.bind();
-
-    _cubeShaderProgram->setUniformValue(_projectionMatrixID, projection);
-    _cubeShaderProgram->setUniformValue(_cameraMatrixID, camera);
-    _cubeShaderProgram->setUniformValue(_rotationMatrixID, _layerRotation);
-    _cubeShaderProgram->setUniformValue(_borderWidthMatrixID, 0.015f);
-
-    f->glDrawArrays(GL_QUADS, 0, _sizeOfVertices / sizeof(_vertices[0]));
-
-    _cubeVAO.release();
-    _cubeShaderProgram->release();
-
-    // Debug
-    _debugShaderProgram->bind();
-    _debugVAO.bind();
-
-    _debugShaderProgram->setUniformValue(_debugProjectionMatrixID, projection);
-    _debugShaderProgram->setUniformValue(_debugCameraMatrixID, camera);
-    _debugShaderProgram->setUniformValue(_debugTranslationMatrixID, _debugCubeTranslation);
-
-    f->glDrawArrays(GL_QUADS, 0, 24);
-
-    _debugVAO.release();
-    _debugShaderProgram->release();
+    _cubeModel->draw();
+    _debugModel->draw();
 
     if(!_isAnimating && _currentCommand < _commands.size())
         rotate(_commands[_currentCommand++], _fastMode);
@@ -627,11 +564,52 @@ void RubiksCube::mouseReleaseEvent(QMouseEvent* event, const QMatrix4x4& project
     QVector3D pointOnCube;
     bool isOnCube = false;
 
+    QVector2D posOnFace;
     QVector3D xpos = getHitPoint(QVector3D(-1, 0, 0), QVector3D(-h, 0, 0), origin, rayWor);
+    int flags = 0;
+
+    if(event->button() & Qt::LeftButton)
+        flags |= RotationComponent::Clockwise;
+    else if(event->button() & Qt::RightButton)
+        flags |= RotationComponent::CounterClockwise;
+    else if(event->button() & Qt::MidButton)
+        flags |= RotationComponent::Turn180;
+
     if(xpos.y() >= -h && xpos.y() <= h && xpos.z() >= -h && xpos.z() <= h)
     {
         isOnCube = true;
         pointOnCube = xpos;
+        posOnFace = QVector2D(xpos.z() + h, xpos.y() + h) / _cellWidth;
+
+        if(QGuiApplication::keyboardModifiers() & Qt::ShiftModifier)
+        {
+            int layer = _size - int(posOnFace.x());
+            if(layer > _size / 2 + 1)
+            {
+                flags |= RotationComponent::Back;
+                flags ^= RotationComponent::ReverseMask;
+                layer = _size - layer + 1;
+            }
+            else
+                flags |= RotationComponent::Front;
+
+            flags |= layer;
+        }
+        else
+        {
+            flags |= RotationComponent::Up;
+            int layer = _size - int(posOnFace.y());
+            if(layer > _size / 2 + 1)
+            {
+                flags |= RotationComponent::Down;
+                flags ^= RotationComponent::ReverseMask;
+                layer = _size - layer + 1;
+            }
+            else
+                flags |= RotationComponent::Up;
+
+            flags |= layer;
+        }
     }
     else
     {
@@ -640,6 +618,8 @@ void RubiksCube::mouseReleaseEvent(QMouseEvent* event, const QMatrix4x4& project
         {
             isOnCube = true;
             pointOnCube = ypos;
+            posOnFace = QVector2D(ypos.x() + h, h - ypos.z()) / _cellWidth;
+            flags |= RotationComponent::Up;
         }
         else
         {
@@ -648,32 +628,29 @@ void RubiksCube::mouseReleaseEvent(QMouseEvent* event, const QMatrix4x4& project
             {
                 isOnCube = true;
                 pointOnCube = zpos;
+                posOnFace = QVector2D(zpos.x() + h, zpos.y() + h) / _cellWidth;
+                flags |= RotationComponent::Front;
             }
         }
     }
 
-    _debugCubeTranslation.setToIdentity();
+    //_debugCubeTranslation.setToIdentity();
     if(isOnCube)
     {
-        _debugCubeTranslation.translate(pointOnCube);
+        //_debugCubeTranslation.translate(pointOnCube);
+        rotate(flags);
     }
 
     event->accept();
 }
 
-void RubiksCube::create()
-{
-    createModel();
-    buildBuffer();
-}
-
-void RubiksCube::createModel()
+void RubiksCube::create(const QMatrix4x4 &camera, const QMatrix4x4 &projection)
 {
     int nbCubeVertices = NUMBER_SIDE * _size * _size * SQUARE_VERTICES_COUNT;
     int nbVertices = nbCubeVertices;// + nbInsideVertices * 3;
     _sizeOfVertices = sizeof(Vertex) * nbVertices;
 
-    _vertices = new Vertex[nbVertices];
+    Vertex *vertices = new Vertex[nbVertices];
     _width = getWidth(_size);
     _cellWidth = _width / float(_size);
     float halfCellWidth = _cellWidth / 2.0;
@@ -757,150 +734,84 @@ void RubiksCube::createModel()
                 const Vertex* faceVertices = cube.vertices(face);
                 for(int m = 0; m < SQUARE_VERTICES_COUNT; m++)
                 {
-                    _vertices[m + id * SQUARE_VERTICES_COUNT] = faceVertices[m];
+                    vertices[m + id * SQUARE_VERTICES_COUNT] = faceVertices[m];
                 }
 
                 _cube[i][j][k] = face;
             }
         }
     }
-}
 
-void RubiksCube::buildBuffer()
-{
-    // Creating buffers
-    _cubeBuffer.create();
-    _equatorBuffer.create();
-    _middleBuffer.create();
-    _standingBuffer.create();
-    _debugBuffer.create();
+    _cubeModel = new OpenGL3DModel(_cubeShaderProgram, vertices, _sizeOfVertices / sizeof(Vertex), QOpenGLBuffer::DynamicDraw);
+    _cubeModel->addUniform("projection", &projection);
+    _cubeModel->addUniform("camera", &camera);
+    _cubeModel->addUniform("rotation", &_layerRotation);
+    _cubeModel->addUniform("borderWidth", &_borderWidth);
 
-    // Creating vertex arrays
-    _cubeVAO.create();
-    _equatorVAO.create();
-    _middleVAO.create();
-    _standingVAO.create();
-    _debugVAO.create();
+    float secondPos = -halfWidth + _cellWidth;
+    Vertex equatorVertices[] = {
+        Vertex(QVector3D(-halfWidth, -halfWidth, -halfWidth), QVector2D(0, 0), Color::Black),
+        Vertex(QVector3D(halfWidth, -halfWidth, -halfWidth), QVector2D(1, 0), Color::Black),
+        Vertex(QVector3D(halfWidth, -halfWidth, halfWidth), QVector2D(1, 1), Color::Black),
+        Vertex(QVector3D(-halfWidth, -halfWidth, halfWidth), QVector2D(0, 1), Color::Black),
+        Vertex(QVector3D(-halfWidth, secondPos, halfWidth), QVector2D(0, 0), Color::Black),
+        Vertex(QVector3D(halfWidth, secondPos, halfWidth), QVector2D(1, 0), Color::Black),
+        Vertex(QVector3D(halfWidth, secondPos, -halfWidth), QVector2D(1, 1), Color::Black),
+        Vertex(QVector3D(-halfWidth, secondPos, -halfWidth), QVector2D(0, 1), Color::Black)
+    };
 
-    _cubeShaderProgram->bind();
-    {
-        _cubeBuffer.bind();
-        {
-            _cubeVAO.bind();
+    Vertex middleVertices[] = {
+        Vertex(QVector3D(-halfWidth, -halfWidth, -halfWidth), QVector2D(0, 0), Color::Black),
+        Vertex(QVector3D(-halfWidth, -halfWidth, halfWidth), QVector2D(1, 0), Color::Black),
+        Vertex(QVector3D(-halfWidth, halfWidth, halfWidth), QVector2D(1, 1), Color::Black),
+        Vertex(QVector3D(-halfWidth, halfWidth, -halfWidth), QVector2D(0, 1), Color::Black),
+        Vertex(QVector3D(secondPos, -halfWidth, halfWidth), QVector2D(0, 0), Color::Black),
+        Vertex(QVector3D(secondPos, -halfWidth, -halfWidth), QVector2D(1, 0), Color::Black),
+        Vertex(QVector3D(secondPos, halfWidth, -halfWidth), QVector2D(1, 1), Color::Black),
+        Vertex(QVector3D(secondPos, halfWidth, halfWidth), QVector2D(0, 1), Color::Black)
+    };
 
-            _cubeBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
-            _cubeBuffer.allocate(_vertices, _sizeOfVertices);
+    Vertex standingVertices[] = {
+        Vertex(QVector3D(halfWidth, -halfWidth, -halfWidth), QVector2D(0, 0), Color::Black),
+        Vertex(QVector3D(-halfWidth, -halfWidth, -halfWidth), QVector2D(1, 0), Color::Black),
+        Vertex(QVector3D(-halfWidth, halfWidth, -halfWidth), QVector2D(1, 1), Color::Black),
+        Vertex(QVector3D(halfWidth, halfWidth, -halfWidth), QVector2D(0, 1), Color::Black),
+        Vertex(QVector3D(-halfWidth, -halfWidth, secondPos), QVector2D(0, 0), Color::Black),
+        Vertex(QVector3D(halfWidth, -halfWidth, secondPos), QVector2D(1, 0), Color::Black),
+        Vertex(QVector3D(halfWidth, halfWidth, secondPos), QVector2D(1, 1), Color::Black),
+        Vertex(QVector3D(-halfWidth, halfWidth, secondPos), QVector2D(0, 1), Color::Black)
+    };
 
-            _cubeShaderProgram->enableAttributeArray(0);
-            _cubeShaderProgram->enableAttributeArray(1);
-            _cubeShaderProgram->enableAttributeArray(2);
-            _cubeShaderProgram->enableAttributeArray(3);
-            _cubeShaderProgram->setAttributeBuffer(0, GL_FLOAT, Vertex::positionOffset(), Vertex::POSITION_TUPLE_SIZE, Vertex::stride());
-            _cubeShaderProgram->setAttributeBuffer(1, GL_FLOAT, Vertex::uvOffset(), Vertex::UV_TUPLE_SIZE, Vertex::stride());
-            _cubeShaderProgram->setAttributeBuffer(2, GL_FLOAT, Vertex::colorOffset(), Vertex::COLOR_TUPLE_SIZE, Vertex::stride());
-            _cubeShaderProgram->setAttributeBuffer(3, GL_FLOAT, Vertex::rotatingOffset(), Vertex::ROTATING_TUPLE_SIZE, Vertex::stride());
+    _equatorFillModel  = new OpenGL3DModel(_stripeShaderProgram, equatorVertices, sizeof(equatorVertices) / sizeof(Vertex), QOpenGLBuffer::StaticDraw);
+    _equatorFillModel->addUniform("projection", &projection);
+    _equatorFillModel->addUniform("camera", &camera);
+    _equatorFillModel->addUniform("rotation", &_layerRotation);
+    _equatorFillModel->addUniform("translation", &_stripTranslation);
 
-            _cubeVAO.release();
-        }
-        _cubeBuffer.release();
-    }
-    _cubeShaderProgram->release();
+    _middleFillModel  = new OpenGL3DModel(_stripeShaderProgram, middleVertices, sizeof(middleVertices) / sizeof(Vertex), QOpenGLBuffer::StaticDraw);
+    _middleFillModel->addUniform("projection", &projection);
+    _middleFillModel->addUniform("camera", &camera);
+    _middleFillModel->addUniform("rotation", &_layerRotation);
+    _middleFillModel->addUniform("translation", &_stripTranslation);
 
-    _stripeShaderProgram->bind();
-    {
-        float halfWidth = _width / 2.0;
-        float secondPos = -halfWidth + _cellWidth;
-        _equatorBuffer.bind();
-        {
-            Vertex vertices[] = {
-                Vertex(QVector3D(-halfWidth, -halfWidth, -halfWidth), QVector2D(0, 0), Color::Black),
-                Vertex(QVector3D(halfWidth, -halfWidth, -halfWidth), QVector2D(1, 0), Color::Black),
-                Vertex(QVector3D(halfWidth, -halfWidth, halfWidth), QVector2D(1, 1), Color::Black),
-                Vertex(QVector3D(-halfWidth, -halfWidth, halfWidth), QVector2D(0, 1), Color::Black),
-                Vertex(QVector3D(-halfWidth, secondPos, halfWidth), QVector2D(0, 0), Color::Black),
-                Vertex(QVector3D(halfWidth, secondPos, halfWidth), QVector2D(1, 0), Color::Black),
-                Vertex(QVector3D(halfWidth, secondPos, -halfWidth), QVector2D(1, 1), Color::Black),
-                Vertex(QVector3D(-halfWidth, secondPos, -halfWidth), QVector2D(0, 1), Color::Black)
-            };
-            _equatorVAO.bind();
-            _equatorBuffer.setUsagePattern(QOpenGLBuffer::StaticDraw);
-            _equatorBuffer.allocate(vertices, sizeof(vertices));
+    _standingFillModel  = new OpenGL3DModel(_stripeShaderProgram, standingVertices, sizeof(standingVertices) / sizeof(Vertex), QOpenGLBuffer::StaticDraw);
+    _standingFillModel->addUniform("projection", &projection);
+    _standingFillModel->addUniform("camera", &camera);
+    _standingFillModel->addUniform("rotation", &_layerRotation);
+    _standingFillModel->addUniform("translation", &_stripTranslation);
 
-            _stripeShaderProgram->enableAttributeArray(0);
-            _stripeShaderProgram->setAttributeBuffer(0, GL_FLOAT, Vertex::positionOffset(), Vertex::POSITION_TUPLE_SIZE, Vertex::stride());
-            _equatorVAO.release();
-        }
-        _equatorBuffer.release();
+    Vertex debugVertices[CUBE_VERTICES_COUNT];
+    cube.setPosition(QVector3D(0, 0, 0));
+    cube.setSize(_width / 10.0);
+    cube.generate();
+    for(int i = 0; i < CUBE_VERTICES_COUNT; i++)
+        debugVertices[i] = cube.vertices()[i];
 
-       _middleBuffer.bind();
-        {
-            Vertex vertices[] = {
-                Vertex(QVector3D(-halfWidth, -halfWidth, -halfWidth), QVector2D(0, 0), Color::Black),
-                Vertex(QVector3D(-halfWidth, -halfWidth, halfWidth), QVector2D(1, 0), Color::Black),
-                Vertex(QVector3D(-halfWidth, halfWidth, halfWidth), QVector2D(1, 1), Color::Black),
-                Vertex(QVector3D(-halfWidth, halfWidth, -halfWidth), QVector2D(0, 1), Color::Black),
-                Vertex(QVector3D(secondPos, -halfWidth, halfWidth), QVector2D(0, 0), Color::Black),
-                Vertex(QVector3D(secondPos, -halfWidth, -halfWidth), QVector2D(1, 0), Color::Black),
-                Vertex(QVector3D(secondPos, halfWidth, -halfWidth), QVector2D(1, 1), Color::Black),
-                Vertex(QVector3D(secondPos, halfWidth, halfWidth), QVector2D(0, 1), Color::Black)
-            };
-            _middleVAO.bind();
-            _middleBuffer.setUsagePattern(QOpenGLBuffer::StaticDraw);
-            _middleBuffer.allocate(vertices, sizeof(vertices));
+    _debugModel  = new OpenGL3DModel(_debugShaderProgram, debugVertices, CUBE_VERTICES_COUNT, QOpenGLBuffer::StaticDraw);
+    _debugModel->addUniform("projection", &projection);
+    _debugModel->addUniform("camera", &camera);
+    _debugModel->addUniform("translation", &_debugCubeTranslation);
 
-            _stripeShaderProgram->enableAttributeArray(0);
-            _stripeShaderProgram->setAttributeBuffer(0, GL_FLOAT, Vertex::positionOffset(), Vertex::POSITION_TUPLE_SIZE, Vertex::stride());
-            _middleVAO.release();
-        }
-       _middleBuffer.release();
-
-       _standingBuffer.bind();
-        {
-            Vertex vertices[] = {
-                Vertex(QVector3D(halfWidth, -halfWidth, -halfWidth), QVector2D(0, 0), Color::Black),
-                Vertex(QVector3D(-halfWidth, -halfWidth, -halfWidth), QVector2D(1, 0), Color::Black),
-                Vertex(QVector3D(-halfWidth, halfWidth, -halfWidth), QVector2D(1, 1), Color::Black),
-                Vertex(QVector3D(halfWidth, halfWidth, -halfWidth), QVector2D(0, 1), Color::Black),
-                Vertex(QVector3D(-halfWidth, -halfWidth, secondPos), QVector2D(0, 0), Color::Black),
-                Vertex(QVector3D(halfWidth, -halfWidth, secondPos), QVector2D(1, 0), Color::Black),
-                Vertex(QVector3D(halfWidth, halfWidth, secondPos), QVector2D(1, 1), Color::Black),
-                Vertex(QVector3D(-halfWidth, halfWidth, secondPos), QVector2D(0, 1), Color::Black)
-            };
-            _standingVAO.bind();
-            _standingBuffer.setUsagePattern(QOpenGLBuffer::StaticDraw);
-            _standingBuffer.allocate(vertices, sizeof(vertices));
-
-            _stripeShaderProgram->enableAttributeArray(0);
-            _stripeShaderProgram->setAttributeBuffer(0, GL_FLOAT, Vertex::positionOffset(), Vertex::POSITION_TUPLE_SIZE, Vertex::stride());
-            _standingVAO.bind();
-        }
-       _standingBuffer.release();
-    }
-    _stripeShaderProgram->release();
-
-    _debugShaderProgram->bind();
-    {
-        _debugBuffer.bind();
-        {
-            Cube cube(QVector3D(0, 0, 0), _width / 10.0);
-            cube.generate();
-            for(int i = 0; i < 24; i++)
-            {
-                _debugVertices[i] = cube.vertices()[i];
-            }
-
-            _debugVAO.bind();
-            _debugBuffer.setUsagePattern(QOpenGLBuffer::StaticDraw);
-            _debugBuffer.allocate(_debugVertices, sizeof(Vertex) * 24);
-
-            _debugShaderProgram->enableAttributeArray(0);
-            _debugShaderProgram->setAttributeBuffer(0, GL_FLOAT, Vertex::positionOffset(), Vertex::POSITION_TUPLE_SIZE, Vertex::stride());
-
-            _debugVAO.release();
-        }
-        _debugBuffer.release();
-    }
-    _debugShaderProgram->release();
 }
 
 void RubiksCube::clean()
@@ -914,9 +825,11 @@ void RubiksCube::clean()
         delete[] _cube[i];
     }
     delete[] _cube;
-    delete[] _vertices;
-    _cubeBuffer.destroy();
-    _cubeVAO.destroy();
+    delete _cubeModel;
+    delete _equatorFillModel;
+    delete _middleFillModel;
+    delete _standingFillModel;
+    delete _debugModel;
     delete _cubeShaderProgram;
     _cubeShaderProgram = nullptr;
 }
@@ -932,8 +845,8 @@ void RubiksCube::setColor(int offset, Color color)
 
     for(int i = 0; i < SQUARE_VERTICES_COUNT; i++)
     {
-        _cubeBuffer.write(offset + Vertex::colorOffset(), &cv, sizeofQVecto3D);
-        _cubeBuffer.write(offset + Vertex::rotatingOffset(), &tb, sizeOfInt);
+        _cubeModel->write(offset + Vertex::colorOffset(), &cv, sizeofQVecto3D);
+        _cubeModel->write(offset + Vertex::rotatingOffset(), &tb, sizeOfInt);
         offset += Vertex::stride();
     }
 }
@@ -955,7 +868,7 @@ void RubiksCube::setColor(Face face, int i, int j, Color color)
 
     for(int i = 0; i < SQUARE_VERTICES_COUNT; i++)
     {
-        _cubeBuffer.write(baseOffset + Vertex::rotatingOffset(), &tb, sizeOfInt);
+        _cubeModel->write(baseOffset + Vertex::rotatingOffset(), &tb, sizeOfInt);
         baseOffset += Vertex::stride();
     }
 }

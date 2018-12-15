@@ -32,6 +32,7 @@
 
 #include "constants.h"
 #include "vertex.h"
+#include "opengl3dmodel.h"
 
 class RubiksCubeView;
 
@@ -48,11 +49,11 @@ public:
 
     inline bool isInitialized() const { return _cubeShaderProgram != nullptr; }
 
-    void init();
-    void reset();
+    void init(const QMatrix4x4 &camera, const QMatrix4x4 &projection);
+    void reset(const QMatrix4x4 &camera, const QMatrix4x4 &projection);
     bool rotate(const QList<int>& flagsList, bool fast = false);
     bool rotate(int flags, bool fast = false);
-    void display(QOpenGLFunctions *f, const QMatrix4x4& projection, const QMatrix4x4& camera);
+    void draw();
     void mouseReleaseEvent(QMouseEvent* event, const QMatrix4x4& projection, const QMatrix4x4& camera);
 
 protected:
@@ -61,9 +62,7 @@ protected:
     void completeRotation();
 
 private:
-    void create();
-    void createModel();
-    void buildBuffer();
+    void create(const QMatrix4x4 &camera, const QMatrix4x4 &projection);
     void clean();
 
     inline static float getWidth(float size) { return 1.6f * log(size) - 0.7f; }
@@ -76,7 +75,7 @@ private:
 private:
     RubiksCubeView* _parent;
     Face ***_cube;
-    Vertex *_vertices;
+    float _borderWidth;
 
     QList<int> _commands;
     int _currentCommand;
@@ -101,20 +100,11 @@ private:
     QOpenGLShaderProgram *_stripeShaderProgram;
     QOpenGLShaderProgram *_debugShaderProgram;
 
-    QOpenGLBuffer _cubeBuffer;
-    QOpenGLVertexArrayObject _cubeVAO;
-
-    QOpenGLBuffer _equatorBuffer;
-    QOpenGLVertexArrayObject _equatorVAO;
-
-    QOpenGLBuffer _middleBuffer;
-    QOpenGLVertexArrayObject _middleVAO;
-
-    QOpenGLBuffer _standingBuffer;
-    QOpenGLVertexArrayObject _standingVAO;
-
-    QOpenGLBuffer _debugBuffer;
-    QOpenGLVertexArrayObject _debugVAO;
+    OpenGL3DModel *_cubeModel;
+    OpenGL3DModel *_equatorFillModel;
+    OpenGL3DModel *_middleFillModel;
+    OpenGL3DModel *_standingFillModel;
+    OpenGL3DModel *_debugModel;
 
     float _currentRotation;
     float _targetRotation;
@@ -124,21 +114,6 @@ private:
     QMap<int, Color> _rotating;
     QMatrix4x4 _stripTranslation;
 
-    int _stripProjectionMatrixID;
-    int _stripCameraMatrixID;
-    int _stripRotationMatrixID;
-    int _stripTranslationMatrixID;
-
-    int _projectionMatrixID;
-    int _cameraMatrixID;
-    int _rotationMatrixID;
-    int _borderWidthMatrixID;
-
-    int _debugProjectionMatrixID;
-    int _debugCameraMatrixID;
-    int _debugTranslationMatrixID;
-
-    Vertex _debugVertices[24];
     QMatrix4x4 _debugCubeTranslation;
 };
 

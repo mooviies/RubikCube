@@ -71,7 +71,7 @@ void RubiksCubeView::paintGL()
     {
         if(!_cube->isInitialized())
         {
-            _cube->init();
+            _cube->init(_camera, _projection);
             _camera.setToIdentity();
             _camera.translate(0, 0, -float(_cube->width()) * (2.8));
             _camera.rotate(45, 0, 1, 0);
@@ -80,7 +80,7 @@ void RubiksCubeView::paintGL()
     }
 
     f->glClear(GL_COLOR_BUFFER_BIT);
-    _cube->display(f, _projection, _camera);
+    _cube->draw();
 
     update();
 }

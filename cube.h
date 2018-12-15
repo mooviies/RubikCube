@@ -24,9 +24,6 @@
 #include "vertex.h"
 #include "constants.h"
 
-static const int SQUARE_VERTICES_COUNT = 4;
-static const int CUBE_VERTICES_COUNT = SQUARE_VERTICES_COUNT * 6;
-
 class Cube
 {
 public:

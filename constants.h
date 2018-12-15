@@ -105,6 +105,8 @@ const char SYMBOL_180 = '2';
 const char SYMBOL_WIDE = 'w';
 
 const int NUMBER_SIDE = 6;
+const int SQUARE_VERTICES_COUNT = 4;
+const int CUBE_VERTICES_COUNT = SQUARE_VERTICES_COUNT * 6;
 
 const float CUBE_SIZE = 0.5f;
 const float CUBE_HSIZE = CUBE_SIZE / 2.0f;

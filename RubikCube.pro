@@ -29,7 +29,8 @@ SOURCES += \
         mainwindow.cpp \
     rubikscubeview.cpp \
     rubikscube.cpp \
-    cube.cpp
+    cube.cpp \
+    opengl3dmodel.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -37,7 +38,8 @@ HEADERS += \
     rubikscube.h \
     constants.h \
     vertex.h \
-    cube.h
+    cube.h \
+    opengl3dmodel.h
 
 FORMS += \
         mainwindow.ui \
