@@ -575,6 +575,9 @@ void RubiksCube::mouseReleaseEvent(QMouseEvent* event, const QMatrix4x4& project
     else if(event->button() & Qt::MidButton)
         flags |= RotationComponent::Turn180;
 
+    if(QGuiApplication::keyboardModifiers() & Qt::ControlModifier)
+        flags |= RotationComponent::Wide;
+
     int middleLayer =  _size / 2 + 1;
 
     if(xpos.y() >= -h && xpos.y() <= h && xpos.z() >= -h && xpos.z() <= h)
@@ -586,13 +589,15 @@ void RubiksCube::mouseReleaseEvent(QMouseEvent* event, const QMatrix4x4& project
         if(QGuiApplication::keyboardModifiers() & Qt::ShiftModifier)
         {
             int layer = _size - int(posOnFace.x());
-            if(_size - int(posOnFace.y()) > middleLayer)
+            if(_size - int(posOnFace.y()) > middleLayer && !(flags & RotationComponent::Turn180))
                 flags ^= RotationComponent::ReverseMask;
 
             if(layer > middleLayer)
             {
                 flags |= RotationComponent::Back;
-                flags ^= RotationComponent::ReverseMask;
+                if(!(flags & RotationComponent::Turn180))
+                    flags ^= RotationComponent::ReverseMask;
+
                 layer = _size - layer + 1;
             }
             else
@@ -603,13 +608,15 @@ void RubiksCube::mouseReleaseEvent(QMouseEvent* event, const QMatrix4x4& project
         else
         {
             int layer = _size - int(posOnFace.y());
-            if(_size - int(posOnFace.x()) < middleLayer)
+            if(_size - int(posOnFace.x()) < middleLayer && !(flags & RotationComponent::Turn180))
                 flags ^= RotationComponent::ReverseMask;
 
             if(layer > middleLayer)
             {
                 flags |= RotationComponent::Down;
-                flags ^= RotationComponent::ReverseMask;
+                if(!(flags & RotationComponent::Turn180))
+                    flags ^= RotationComponent::ReverseMask;
+
                 layer = _size - layer + 1;
             }
             else
