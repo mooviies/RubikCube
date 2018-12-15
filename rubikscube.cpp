@@ -540,7 +540,7 @@ void RubiksCube::draw()
     }
 
     _cubeModel->draw();
-    _debugModel->draw();
+    //_debugModel->draw();
 
     if(!_isAnimating && _currentCommand < _commands.size())
         rotate(_commands[_currentCommand++], _fastMode);
@@ -575,6 +575,8 @@ void RubiksCube::mouseReleaseEvent(QMouseEvent* event, const QMatrix4x4& project
     else if(event->button() & Qt::MidButton)
         flags |= RotationComponent::Turn180;
 
+    int middleLayer =  _size / 2 + 1;
+
     if(xpos.y() >= -h && xpos.y() <= h && xpos.z() >= -h && xpos.z() <= h)
     {
         isOnCube = true;
@@ -584,7 +586,10 @@ void RubiksCube::mouseReleaseEvent(QMouseEvent* event, const QMatrix4x4& project
         if(QGuiApplication::keyboardModifiers() & Qt::ShiftModifier)
         {
             int layer = _size - int(posOnFace.x());
-            if(layer > _size / 2 + 1)
+            if(_size - int(posOnFace.y()) > middleLayer)
+                flags ^= RotationComponent::ReverseMask;
+
+            if(layer > middleLayer)
             {
                 flags |= RotationComponent::Back;
                 flags ^= RotationComponent::ReverseMask;
@@ -593,13 +598,15 @@ void RubiksCube::mouseReleaseEvent(QMouseEvent* event, const QMatrix4x4& project
             else
                 flags |= RotationComponent::Front;
 
-            flags |= layer;
+            flags += layer;
         }
         else
         {
-            flags |= RotationComponent::Up;
             int layer = _size - int(posOnFace.y());
-            if(layer > _size / 2 + 1)
+            if(_size - int(posOnFace.x()) < middleLayer)
+                flags ^= RotationComponent::ReverseMask;
+
+            if(layer > middleLayer)
             {
                 flags |= RotationComponent::Down;
                 flags ^= RotationComponent::ReverseMask;
@@ -608,7 +615,7 @@ void RubiksCube::mouseReleaseEvent(QMouseEvent* event, const QMatrix4x4& project
             else
                 flags |= RotationComponent::Up;
 
-            flags |= layer;
+            flags += layer;
         }
     }
     else
@@ -619,7 +626,41 @@ void RubiksCube::mouseReleaseEvent(QMouseEvent* event, const QMatrix4x4& project
             isOnCube = true;
             pointOnCube = ypos;
             posOnFace = QVector2D(ypos.x() + h, h - ypos.z()) / _cellWidth;
-            flags |= RotationComponent::Up;
+
+            if(QGuiApplication::keyboardModifiers() & Qt::ShiftModifier)
+            {
+                int layer = posOnFace.x() + 1;
+                if(_size - int(posOnFace.y()) < middleLayer)
+                    flags ^= RotationComponent::ReverseMask;
+
+                if(layer > middleLayer)
+                {
+                    flags |= RotationComponent::Right;
+                    flags ^= RotationComponent::ReverseMask;
+                    layer = _size - layer + 1;
+                }
+                else
+                    flags |= RotationComponent::Left;
+
+                flags += layer;
+            }
+            else
+            {
+                int layer = posOnFace.y() + 1;
+                if(_size - int(posOnFace.x()) > middleLayer)
+                    flags ^= RotationComponent::ReverseMask;
+
+                if(layer > middleLayer)
+                {
+                    flags |= RotationComponent::Back;
+                    flags ^= RotationComponent::ReverseMask;
+                    layer = _size - layer + 1;
+                }
+                else
+                    flags |= RotationComponent::Front;
+
+                flags += layer;
+            }
         }
         else
         {
@@ -629,7 +670,41 @@ void RubiksCube::mouseReleaseEvent(QMouseEvent* event, const QMatrix4x4& project
                 isOnCube = true;
                 pointOnCube = zpos;
                 posOnFace = QVector2D(zpos.x() + h, zpos.y() + h) / _cellWidth;
-                flags |= RotationComponent::Front;
+
+                if(QGuiApplication::keyboardModifiers() & Qt::ShiftModifier)
+                {
+                    int layer = posOnFace.x() + 1;
+                    if(_size - int(posOnFace.y()) < middleLayer)
+                        flags ^= RotationComponent::ReverseMask;
+
+                    if(layer > middleLayer)
+                    {
+                        flags |= RotationComponent::Right;
+                        flags ^= RotationComponent::ReverseMask;
+                        layer = _size - layer + 1;
+                    }
+                    else
+                        flags |= RotationComponent::Left;
+
+                    flags += layer;
+                }
+                else
+                {
+                    int layer = _size - int(posOnFace.y());
+                    if(_size - int(posOnFace.x()) < middleLayer)
+                        flags ^= RotationComponent::ReverseMask;
+
+                    if(layer > middleLayer)
+                    {
+                        flags |= RotationComponent::Down;
+                        flags ^= RotationComponent::ReverseMask;
+                        layer = _size - layer + 1;
+                    }
+                    else
+                        flags |= RotationComponent::Up;
+
+                    flags += layer;
+                }
             }
         }
     }
@@ -747,6 +822,8 @@ void RubiksCube::create(const QMatrix4x4 &camera, const QMatrix4x4 &projection)
     _cubeModel->addUniform("camera", &camera);
     _cubeModel->addUniform("rotation", &_layerRotation);
     _cubeModel->addUniform("borderWidth", &_borderWidth);
+
+    delete[] vertices;
 
     float secondPos = -halfWidth + _cellWidth;
     Vertex equatorVertices[] = {
