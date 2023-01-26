@@ -22,11 +22,11 @@
 #define RUBIKCUBEVIEW_H
 
 #include <QMainWindow>
-#include <QOpenGLWidget>
+#include <QtOpenGLWidgets/QtOpenGLWidgets>
 #include <QMatrix4x4>
-#include <QOpenGLBuffer>
-#include <QOpenGLVertexArrayObject>
-#include <QOpenGLShaderProgram>
+#include <QtOpenGL/QOpenGLBuffer>
+#include <QtOpenGL/QOpenGLVertexArrayObject>
+#include <QtOpenGL/QOpenGLShaderProgram>
 
 #include "rubikscube.h"
 
@@ -46,7 +46,7 @@ protected:
     void resizeGL(int w, int h) override;
     void paintGL() override;
 
-    void enterEvent(QEvent *event) override;
+    void enterEvent(QEnterEvent *event) override;
     void leaveEvent(QEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
 

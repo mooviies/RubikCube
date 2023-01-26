@@ -572,7 +572,7 @@ void RubiksCube::mouseReleaseEvent(QMouseEvent* event, const QMatrix4x4& project
         flags |= RotationComponent::Clockwise;
     else if(event->button() & Qt::RightButton)
         flags |= RotationComponent::CounterClockwise;
-    else if(event->button() & Qt::MidButton)
+    else if(event->button() & Qt::MiddleButton)
         flags |= RotationComponent::Turn180;
 
     if(QGuiApplication::keyboardModifiers() & Qt::ControlModifier)

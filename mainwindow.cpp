@@ -533,62 +533,62 @@ void MainWindow::rotateWithControls(int flags)
     if(ui->control_B->isChecked())
     {
         flags |= RotationComponent::Back;
-        expr = LayerOut::L_Back;
+        expr = QChar::fromLatin1(LayerOut::L_Back);
     }
     else if(ui->control_F->isChecked())
     {
         flags |= RotationComponent::Front;
-        expr = LayerOut::L_Front;
+        expr = QChar::fromLatin1(LayerOut::L_Front);
     }
     else if(ui->control_D->isChecked())
     {
         flags |= RotationComponent::Down;
-        expr = LayerOut::L_Down;
+        expr = QChar::fromLatin1(LayerOut::L_Down);
     }
     else if(ui->control_U->isChecked())
     {
         flags |= RotationComponent::Up;
-        expr = LayerOut::L_Up;
+        expr = QChar::fromLatin1(LayerOut::L_Up);
     }
     else if(ui->control_L->isChecked())
     {
         flags |= RotationComponent::Left;
-        expr = LayerOut::L_Left;
+        expr = QChar::fromLatin1(LayerOut::L_Left);
     }
     else if(ui->control_R->isChecked())
     {
         flags |= RotationComponent::Right;
-        expr = LayerOut::L_Right;
+        expr = QChar::fromLatin1(LayerOut::L_Right);
     }
     else if(ui->control_E->isChecked())
     {
         flags |= RotationComponent::Equator;
-        expr = LayerOut::L_Equator;
+        expr = QChar::fromLatin1(LayerOut::L_Equator);
     }
     else if(ui->control_M->isChecked())
     {
         flags |= RotationComponent::Middle;
-        expr = LayerOut::L_Middle;
+        expr = QChar::fromLatin1(LayerOut::L_Middle);
     }
     else if(ui->control_S->isChecked())
     {
         flags |= RotationComponent::Standing;
-        expr = LayerOut::L_Standing;
+        expr = QChar::fromLatin1(LayerOut::L_Standing);
     }
     else if(ui->control_x->isChecked())
     {
         flags |= RotationComponent::CubeX;
-        expr = LayerOut::L_CubeX;
+        expr = QChar::fromLatin1(LayerOut::L_CubeX);
     }
     else if(ui->control_y->isChecked())
     {
         flags |= RotationComponent::CubeY;
-        expr = LayerOut::L_CubeY;
+        expr = QChar::fromLatin1(LayerOut::L_CubeY);
     }
     else if(ui->control_z->isChecked())
     {
         flags |= RotationComponent::CubeZ;
-        expr = LayerOut::L_CubeZ;
+        expr = QChar::fromLatin1(LayerOut::L_CubeZ);
     }
 
     int nbLayer = ui->control_nbLayer->value();

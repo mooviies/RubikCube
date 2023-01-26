@@ -3,9 +3,9 @@
 
 #include <QMap>
 #include <QMatrix4x4>
-#include <QOpenGLShaderProgram>
-#include <QOpenGLBuffer>
-#include <QOpenGLVertexArrayObject>
+#include <QtOpenGL/QOpenGLShaderProgram>
+#include <QtOpenGL/QOpenGLBuffer>
+#include <QtOpenGL/QOpenGLVertexArrayObject>
 #include <QOpenGLFunctions>
 
 #include "vertex.h"

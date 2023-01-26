@@ -1,4 +1,5 @@
 #include "opengl3dmodel.h"
+#include "qopenglfunctions.h"
 
 OpenGL3DModel::OpenGL3DModel(QOpenGLShaderProgram *shader, const Vertex* vertices, int nbVertices, QOpenGLBuffer::UsagePattern usage, GLenum mode)
     : _shader(shader), _mode(mode)

@@ -21,9 +21,9 @@
 #ifndef RUBIKSCUBE_H
 #define RUBIKSCUBE_H
 
-#include <QOpenGLShaderProgram>
-#include <QOpenGLBuffer>
-#include <QOpenGLVertexArrayObject>
+#include <QtOpenGL/QOpenGLShaderProgram>
+#include <QtOpenGL/QOpenGLBuffer>
+#include <QtOpenGL/QOpenGLVertexArrayObject>
 #include <QOpenGLFunctions>
 #include <QMap>
 #include <QVector3D>

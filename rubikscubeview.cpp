@@ -85,7 +85,7 @@ void RubiksCubeView::paintGL()
     update();
 }
 
-void RubiksCubeView::enterEvent(QEvent *event)
+void RubiksCubeView::enterEvent(QEnterEvent *event)
 {
 }
 
