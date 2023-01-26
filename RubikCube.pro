@@ -51,4 +51,10 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 RESOURCES += \
     resources.qrc
 
-DISTFILES +=
+win32: LIBS += -L$$PWD/libs/ -lqtadvancedcss
+
+INCLUDEPATH += $$PWD/includes
+DEPENDPATH += $$PWD/includes
+
+win32:!win32-g++: PRE_TARGETDEPS += $$PWD/libs/qtadvancedcss.lib
+else:win32-g++: PRE_TARGETDEPS += $$PWD/libs/libqtadvancedcss.a

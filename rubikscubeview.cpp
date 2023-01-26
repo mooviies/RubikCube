@@ -79,6 +79,7 @@ void RubiksCubeView::paintGL()
         }
     }
 
+    f->glClearColor(0.23, 0.23, 0.23, 1);
     f->glClear(GL_COLOR_BUFFER_BIT);
     _cube->draw();
 

@@ -26,6 +26,7 @@
 #include <QPushButton>
 #include <QSettings>
 #include <QDialog>
+#include <QtAdvancedStylesheet.h>
 
 #include "rubikscube.h"
 #include "ui_dialoghelp.h"
@@ -66,6 +67,7 @@ private slots:
     void about();
     void resetSettings();
     void loadSettings();
+    void loadStyle();
 
     void execute();
 
@@ -113,6 +115,7 @@ private:
     Ui::Dialog _aboutUI;
     QDialog _about;
     QRect _sizeBeforeMaximize;
+    acss::QtAdvancedStylesheet _advancedStylesheet;
 };
 
 #endif // MAINWINDOW_H

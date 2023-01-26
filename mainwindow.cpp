@@ -30,6 +30,8 @@
 #include <QScreen>
 #include <QWindowStateChangeEvent>
 
+using namespace acss;
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
@@ -100,6 +102,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     setCube(new RubiksCube(ui->openGLWidget, _settings.value(SETTINGS_KEY_SIZE, 3).toInt()));
     loadSettings();
+    loadStyle();
 }
 
 MainWindow::~MainWindow()
@@ -457,6 +460,22 @@ void MainWindow::loadSettings()
     setWindowState((Qt::WindowState)_settings.value(SETTINGS_KEY_WINDOW_STATE, Qt::WindowNoState).toUInt());
 }
 
+void MainWindow::loadStyle()
+{
+    QString appDir = qApp->applicationDirPath();
+
+    _advancedStylesheet.setStylesDirPath(appDir + "/styles");
+    _advancedStylesheet.setOutputDirPath(appDir + "/output");
+
+    _advancedStylesheet.setCurrentStyle("qt_material");
+    _advancedStylesheet.setCurrentTheme("dark_white_orange");
+    _advancedStylesheet.updateStylesheet();
+
+    QString stylesheet = _advancedStylesheet.styleSheet();
+
+    qApp->setStyleSheet(stylesheet);
+}
+
 void MainWindow::execute()
 {
     auto commands = getCommands(ui->textEditActions->toPlainText());
@@ -519,7 +538,7 @@ void MainWindow::scramble()
         expr += el + " ";
     }
 
-    ui->textEditActions->setText(expr);
+    ui->textEditActions->setPlainText(expr);
 }
 
 void MainWindow::solve()
