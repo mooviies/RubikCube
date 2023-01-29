@@ -34,14 +34,25 @@ protected:
     void mouseReleaseEvent(QMouseEvent *event) override;
 
 private:
+    void updateRotation(const QPoint &diff);
+    QVector3D getArcballVector(QPoint mouseDiff);
+
+private:
+    static const float BORDER_LIMIT_DISTANCE;
+
     VRCView* _view;
 
-    QMatrix4x4 _camera;
+    float _verticalRotation;
+    QMatrix4x4 _world;
     QMatrix4x4 _projection;
+    QMatrix4x4 _camera;
+    QMatrix4x4 _modelView;
 
     float _aspectRatio;
 
     bool _mouseIsInside;
+    bool _mouseIsPressed;
+    QPoint _lastMousePosition;
     QPoint _mousePosition;
 };
 

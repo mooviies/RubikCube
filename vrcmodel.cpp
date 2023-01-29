@@ -39,9 +39,8 @@ bool VRCModel::execute(VRCAction action)
 
     if(layerNumber == 0)
         layerNumber = 1;
-    else if(layerNumber > _maxLayerNumber)
-        throw std::invalid_argument(QString("The layer number %1 is invalid for a cube of size %2. The maximum value is %3.")
-                                    .arg(layerNumber, _size, _maxLayerNumber).toStdString());
+    else if(layerNumber > _size)
+        layerNumber = _size;
 
     auto layer = action.getLayer();
     auto option = action.getOption();
@@ -116,7 +115,7 @@ bool VRCModel::applyRotation(VRCAction::Layer layer, VRCAction::Option option, V
     {
         case Layer::Left:
             getFace(Side::Left).rotate(rotation);
-            if(_maxLayerNumber == _size)
+            if(layerNumber == _size)
                 getFace(Side::Right).rotate(rotationReversed);
 
             for(auto i = startLayer; i <= layerNumber; i++)
@@ -133,7 +132,7 @@ bool VRCModel::applyRotation(VRCAction::Layer layer, VRCAction::Option option, V
             break;
         case Layer::Front:
             getFace(Side::Front).rotate(rotation);
-            if(_maxLayerNumber == _size)
+            if(layerNumber == _size)
                 getFace(Side::Back).rotate(rotationReversed);
 
             for(auto i = startLayer; i <= layerNumber; i++)
@@ -151,7 +150,7 @@ bool VRCModel::applyRotation(VRCAction::Layer layer, VRCAction::Option option, V
             break;
         case Layer::Right:
             getFace(Side::Right).rotate(rotation);
-            if(_maxLayerNumber == _size)
+            if(layerNumber == _size)
                 getFace(Side::Left).rotate(rotationReversed);
 
             for(auto i = startLayer; i <= layerNumber; i++)
@@ -168,7 +167,7 @@ bool VRCModel::applyRotation(VRCAction::Layer layer, VRCAction::Option option, V
             break;
         case Layer::Back:
             getFace(Side::Back).rotate(rotation);
-            if(_maxLayerNumber == _size)
+            if(layerNumber == _size)
                 getFace(Side::Front).rotate(rotationReversed);
 
             for(auto i = startLayer; i <= layerNumber; i++)
@@ -186,8 +185,7 @@ bool VRCModel::applyRotation(VRCAction::Layer layer, VRCAction::Option option, V
             break;
         case Layer::Up:
             getFace(Side::Up).rotate(rotation);
-
-            if(_maxLayerNumber == _size)
+            if(layerNumber == _size)
                 getFace(Side::Down).rotate(rotationReversed);
 
             for(auto i = startLayer; i <= layerNumber; i++)
@@ -204,8 +202,7 @@ bool VRCModel::applyRotation(VRCAction::Layer layer, VRCAction::Option option, V
             break;
         case Layer::Down:
             getFace(Side::Down).rotate(rotation);
-
-            if(_maxLayerNumber == _size)
+            if(layerNumber == _size)
                 getFace(Side::Up).rotate(rotationReversed);
 
             for(auto i = startLayer; i <= layerNumber; i++)

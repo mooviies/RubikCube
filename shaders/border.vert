@@ -8,8 +8,10 @@ uniform mat4 translation;
 uniform mat4 projection;
 uniform mat4 rotation;
 uniform mat4 camera;
+uniform mat4 world;
+uniform mat4 model;
 
 void main()
 {
-  gl_Position = projection * camera * rotation * translation * vec4(position, 1.0);
+  gl_Position = projection * camera * world * model * rotation * translation * vec4(position, 1.0);
 }

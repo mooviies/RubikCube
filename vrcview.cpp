@@ -27,7 +27,7 @@ VRCView::VRCView(const VRCModel &model)
     _colorBySide.insert(Side::Down, Color::Yellow);
 }
 
-void VRCView::init(const QMatrix4x4 &camera, const QMatrix4x4 &projection)
+void VRCView::init(const QMatrix4x4 &projection, const QMatrix4x4 &camera, const QMatrix4x4 &world, const QMatrix4x4 &model)
 {
     _currentRotation = 0;
     _targetRotation = 0;
@@ -46,7 +46,7 @@ void VRCView::init(const QMatrix4x4 &camera, const QMatrix4x4 &projection)
     _cubeShaderProgram->link();
     _stripeShaderProgram->link();
 
-    create(camera, projection);
+    create(projection, camera, world, model);
 }
 
 void VRCView::update(const VRCModel& model)
@@ -149,7 +149,7 @@ void VRCView::draw()
     //    rotate(_commands[_currentCommand++], _fastMode);
 }
 
-void VRCView::create(const QMatrix4x4 &camera, const QMatrix4x4 &projection)
+void VRCView::create(const QMatrix4x4 &projection, const QMatrix4x4 &camera, const QMatrix4x4 &world, const QMatrix4x4 &model)
 {
     int nbCubeVertices = NUMBER_SIDE * _size * _size * SQUARE_VERTICES_COUNT;
     int nbVertices = nbCubeVertices;// + nbInsideVertices * 3;
@@ -238,6 +238,8 @@ void VRCView::create(const QMatrix4x4 &camera, const QMatrix4x4 &projection)
     _cubeModel = new MeshOpenGL(_cubeShaderProgram, vertices, _sizeOfVertices / sizeof(Vertex), QOpenGLBuffer::DynamicDraw);
     _cubeModel->addUniform("projection", &projection);
     _cubeModel->addUniform("camera", &camera);
+    _cubeModel->addUniform("world", &world);
+    _cubeModel->addUniform("model", &model);
     _cubeModel->addUniform("rotation", &_layerRotation);
     _cubeModel->addUniform("borderWidth", &BORDER_WIDTH);
 

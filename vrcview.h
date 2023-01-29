@@ -22,10 +22,9 @@ public:
 
     uint getSize() const { return _size; }
 
-    void init(const QMatrix4x4 &camera, const QMatrix4x4 &projection);
+    void init(const QMatrix4x4 &projection, const QMatrix4x4 &camera, const QMatrix4x4 &world, const QMatrix4x4 &model);
     bool isInitialized() const { return _cubeShaderProgram != nullptr; }
 
-    void reset(const QMatrix4x4 &camera, const QMatrix4x4 &projection);
     bool rotate(const QList<int>& flagsList, bool fast = false);
     bool rotate(int flags, bool fast = false);
 
@@ -33,7 +32,7 @@ public:
     void draw();
 
 private:
-    void create(const QMatrix4x4 &camera, const QMatrix4x4 &projection);
+    void create(const QMatrix4x4 &projection, const QMatrix4x4 &camera, const QMatrix4x4 &world, const QMatrix4x4 &model);
     static float getWidth(float size) { return 1.6f * log(size) - 0.7f; }
     uint getID(uint i, uint j, uint k) const { return j + k * _size + i * _size * _size; }
     void completeRotation();

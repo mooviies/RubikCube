@@ -7,6 +7,8 @@ layout(location = 3) in int rotating;
 uniform mat4 projection;
 uniform mat4 camera;
 uniform mat4 rotation;
+uniform mat4 world;
+uniform mat4 model;
 uniform float borderWidth;
 
 out vec4 vColor;
@@ -19,9 +21,9 @@ void main()
   uvPos = uv;
 
   if(rotating > 0.5)
-    gl_Position = projection * camera * rotation * vec4(position, 1.0);
+    gl_Position = projection * camera * world * model * rotation * vec4(position, 1.0);
   else
-    gl_Position = projection * camera * vec4(position, 1.0);
+    gl_Position = projection * camera * world * model * vec4(position, 1.0);
 
   vColor = vec4(color, 1.0);
 }
