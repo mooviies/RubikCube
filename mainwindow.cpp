@@ -96,6 +96,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     _view = nullptr;
     _controller = nullptr;
+    _timer = new QTimer(this);
     setModel(new VRCModel(_settings.value(SETTINGS_KEY_SIZE, 3).toInt()));
     loadSettings();
     loadStyle();
@@ -106,6 +107,7 @@ MainWindow::~MainWindow()
     delete ui;
     delete _model;
     delete _view;
+    delete _timer;
     delete _controller;
 }
 
@@ -145,11 +147,22 @@ void MainWindow::setModel(VRCModel *model)
     {
         _view = new VRCView(_model);
         ui->openGLWidget->setView(_view);
+        _view->setModel(_model);
+        _model->setView(_view);
+
+    }
+    else
+    {
+        _view->setModel(_model);
         _model->setView(_view);
     }
 
     if(_controller == nullptr)
-        _controller = new VRCController(model);
+    {
+        _controller = new VRCController(model, _view);
+        connect(_timer, SIGNAL(timeout()), this, SLOT(updateController()));
+        _timer->start();
+    }
     else
         _controller->setModel(model);
 }
@@ -726,4 +739,9 @@ void MainWindow::nbLChanged(int value)
             obj->setChecked(false);
         }
     }*/
+}
+
+void MainWindow::updateController()
+{
+    _controller->update();
 }

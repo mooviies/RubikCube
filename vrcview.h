@@ -24,7 +24,10 @@ public:
     uint getSize() const { return _size; }
 
     void init(const QMatrix4x4 &projection, const QMatrix4x4 &camera, const QMatrix4x4 &world, const QMatrix4x4 &model);
+    void setModel(VRCModel *model);
+
     bool isInitialized() const { return _cubeShaderProgram != nullptr; }
+    bool isAnimating() const { return _isAnimating; }
 
     bool rotate(const QList<int>& flagsList, bool fast = false);
     bool rotate(int flags, bool fast = false);
@@ -48,7 +51,6 @@ private:
     uint _size;
 
     VRCModel* _model;
-    QQueue<VRCAction> _actionsToAnimate;
     VRCAction _animatingAction;
     bool _isAnimating;
     bool _fastMode;

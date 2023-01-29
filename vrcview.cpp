@@ -57,6 +57,11 @@ void VRCView::init(const QMatrix4x4 &projection, const QMatrix4x4 &camera, const
     create(projection, camera, world, model);
 }
 
+void VRCView::setModel(VRCModel *model)
+{
+    _model = model;
+}
+
 void VRCView::update(const VRCAction &lastAction)
 {
     _size = _model->getSize();
@@ -68,72 +73,67 @@ void VRCView::update(const VRCAction &lastAction)
         {
             for(uint c = 0; c < _size; c++)
             {
+                if(!face->wasModified(r + 1, c + 1))
+                    continue;
+
                 setColor(face->getInitialSide(), r, c, _colorBySide[face->getSide(r + 1, c + 1)]);
             }
         }
     }
     _cubeModel->releaseBuffer();
 
-    _actionsToAnimate.enqueue(lastAction);
+    _animatingAction = lastAction;
+    if(_fastMode)
+        updateVisualModel();
+    else
+    {
+        switch(getRotationFace(_animatingAction.getLayer()))
+        {
+            case Layer::Back:
+                _rotationVector = QVector3D(0, 0, 1);
+                break;
+            case Layer::Front:
+                _rotationVector = QVector3D(0, 0, -1);
+                break;
+            case Layer::Left:
+                _rotationVector = QVector3D(1, 0, 0);
+                break;
+            case Layer::Right:
+                _rotationVector = QVector3D(-1, 0, 0);
+                break;
+            case Layer::Up:
+                _rotationVector = QVector3D(0, -1, 0);
+                break;
+            case Layer::Down:
+                _rotationVector = QVector3D(0, 1, 0);
+                break;
+            default:
+                break;
+        }
+
+        switch(_animatingAction.getRotation())
+        {
+
+            case VRCAction::Rotation::Clockwise:
+                _targetRotation = 90;
+                break;
+            case VRCAction::Rotation::CounterClockwise:
+                _targetRotation = 90;
+                _rotationVector *= -1;
+                break;
+            case VRCAction::Rotation::Turn180:
+                _targetRotation = 180;
+                break;
+        }
+
+        _currentRotation = 0;
+        _isAnimating = true;
+    }
 }
 
 void VRCView::draw()
 {
-    if(!_isAnimating)
-    {
-        if(!_actionsToAnimate.isEmpty())
-        {
-            _animatingAction = _actionsToAnimate.dequeue();
-            if(_fastMode)
-                updateVisualModel();
-            else
-            {
-                switch(getRotationFace(_animatingAction.getLayer()))
-                {
-                    case Layer::Back:
-                        _rotationVector = QVector3D(0, 0, 1);
-                        break;
-                    case Layer::Front:
-                        _rotationVector = QVector3D(0, 0, -1);
-                        break;
-                    case Layer::Left:
-                        _rotationVector = QVector3D(1, 0, 0);
-                        break;
-                    case Layer::Right:
-                        _rotationVector = QVector3D(-1, 0, 0);
-                        break;
-                    case Layer::Up:
-                        _rotationVector = QVector3D(0, -1, 0);
-                        break;
-                    case Layer::Down:
-                        _rotationVector = QVector3D(0, 1, 0);
-                        break;
-                    default:
-                        break;
-                }
-
-                switch(_animatingAction.getRotation())
-                {
-
-                    case VRCAction::Rotation::Clockwise:
-                        _targetRotation = 90;
-                        break;
-                    case VRCAction::Rotation::CounterClockwise:
-                        _targetRotation = 90;
-                        _rotationVector *= -1;
-                        break;
-                    case VRCAction::Rotation::Turn180:
-                        _targetRotation = 180;
-                        break;
-                }
-
-                _currentRotation = 0;
-                _isAnimating = true;
-            }
-
-        }
-    }
-    else if(_isAnimating)
+    if(_isAnimating)
     {
         _currentRotation += ROTATION_SPEED;
         if(_currentRotation >= _targetRotation)

@@ -26,6 +26,7 @@
 #include <QPushButton>
 #include <QSettings>
 #include <QDialog>
+#include <QTimer>
 #include <QtAdvancedStylesheet.h>
 
 #include "vrcmodel.h"
@@ -54,9 +55,9 @@ protected:
     void addToHistory(int flags);
     void addToHistory(const QList<int>& flagsList);
 
-    void moveEvent(QMoveEvent *event);
-    void resizeEvent(QResizeEvent *event);
-    void changeEvent(QEvent *event);
+    void moveEvent(QMoveEvent *event) override;
+    void resizeEvent(QResizeEvent *event) override;
+    void changeEvent(QEvent *event) override;
 
 private slots:
     void newCube();
@@ -98,12 +99,14 @@ private slots:
     void pushz(bool checked);
 
     void nbLChanged(int value);
+    void updateController();
 
 private:
     Ui::MainWindow *ui;
     VRCModel *_model;
     VRCView *_view;
     VRCController *_controller;
+    QTimer *_timer;
 
     QList<QPushButton*> _layerControls;
 

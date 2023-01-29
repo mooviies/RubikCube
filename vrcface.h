@@ -30,11 +30,27 @@ public:
         Error  = 0xFF0DFF
     };
 
+    class Piece
+    {
+    public:
+        Piece() : _side(Side::Front), _modified(false) {}
+        Piece(Side side) : _side(side), _modified(false) {}
+        bool wasModified() { return _modified; }
+        Side getSide() { _modified = false; return _side; }
+        void setSide(Side side) { _modified = true; _side = side; }
+
+    private:
+        friend class VRCFace;
+
+        Side _side;
+        bool _modified;
+    };
+
 private:
     struct Iterator {
         using iterator_category = std::forward_iterator_tag;
         using difference_type   = std::ptrdiff_t;
-        using value_type        = Side;
+        using value_type        = Piece;
         using pointer           = value_type*;
         using reference         = value_type&;
 
@@ -82,7 +98,8 @@ public:
     uint getSize() const { return _size; }
 
     Side getInitialSide() const { return _initialSide; }
-    Side getSide(uint row, uint col) const { return _pieces[getPosition(row - 1, col - 1)]; }
+    Side getSide(uint row, uint col) { return _pieces[getPosition(row - 1, col - 1)].getSide(); }
+    bool wasModified(uint row, uint col) const { return _pieces[getPosition(row - 1, col - 1)].wasModified(); }
 
     RowIterator beginRow(uint row) { return RowIterator(&_pieces[getPosition(row - 1, 0)], _size); }
     RowIterator endRow(uint row) { return RowIterator(&_pieces[getPosition(row - 1, _size)], _size); }
@@ -109,7 +126,7 @@ private:
     Side _initialSide;
     uint _size;
     uint _arraySize;
-    Side* _pieces;
+    Piece* _pieces;
 };
 
 template<class ForwardIt1, class ForwardIt2, class ForwardIt3, class ForwardIt4>
@@ -117,27 +134,27 @@ void VRCFace::rotate(ForwardIt1 it1, ForwardIt1 it1End, ForwardIt2 it2, ForwardI
 {
     for(; it1 != it1End; ++it1,++it2,++it3,++it4)
     {
-        auto buffer = *it4;
+        auto buffer = it4->_side;
         switch(rotation)
         {
             case VRCAction::Rotation::Clockwise:
-                *it4 = *it3;
-                *it3 = *it2;
-                *it2 = *it1;
-                *it1 = buffer;
+                it4->setSide(it3->_side);
+                it3->setSide(it2->_side);
+                it2->setSide(it1->_side);
+                it1->setSide(buffer);
                 break;
             case VRCAction::Rotation::CounterClockwise:
-                *it4 = *it1;
-                *it1 = *it2;
-                *it2 = *it3;
-                *it3 = buffer;
+                it4->setSide(it1->_side);
+                it1->setSide(it2->_side);
+                it2->setSide(it3->_side);
+                it3->setSide(buffer);
                 break;
             case VRCAction::Rotation::Turn180:
-                *it4 = *it2;
-                *it2 = buffer;
-                buffer = *it1;
-                *it1 = *it3;
-                *it3 = buffer;
+                it4->setSide(it2->_side);
+                it2->setSide(buffer);
+                buffer = it1->_side;
+                it1->setSide(it3->_side);
+                it3->setSide(buffer);
                 break;
         }
     }
