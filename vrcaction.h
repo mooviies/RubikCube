@@ -61,6 +61,7 @@ public:
 
     static VRCAction getIdentity() { return VRCAction(0); }
 
+    VRCAction() : VRCAction(0) {}
     VRCAction(uint flags);
     VRCAction(Layer layer, Option option, Rotation rotation, ushort layerNumber);
     VRCAction(const VRCAction &other) { _flags = other._flags; }
@@ -78,10 +79,15 @@ public:
     // All the following operations will return the identity if executed on the identity
     // Create a new VRCAction in this case
     VRCAction reversed() const;
+    VRCAction with(Layer layer, Option option, Rotation rotation, ushort layerNumber);
     VRCAction withLayer(Layer layer) const;
     VRCAction withOption(Option option) const;
     VRCAction withRotation(Rotation rotation) const;
     VRCAction withLayerNumber(ushort layerNumber) const;
+
+private:
+    static uint getFlags(Layer layer, Option option, Rotation rotation, ushort layerNumber)
+    { return (layerNumber << LAYER_MASK_SHIFT) | (((uint)layer | (uint)option | (uint)rotation) & (uint)GeneralMask::Operation); }
 
 private:
     const static uint LAYER_MASK_SHIFT;

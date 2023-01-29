@@ -8,6 +8,7 @@
 #include <QMap>
 #include <QVector3D>
 #include <QMouseEvent>
+#include <QQueue>
 #include <cmath>
 
 #include "meshopengl.h"
@@ -18,7 +19,7 @@ class VRCModel;
 class VRCView
 {
 public:
-    VRCView(const VRCModel& model);
+    VRCView(VRCModel *model);
 
     uint getSize() const { return _size; }
 
@@ -28,23 +29,27 @@ public:
     bool rotate(const QList<int>& flagsList, bool fast = false);
     bool rotate(int flags, bool fast = false);
 
-    void update(const VRCModel& model);
+    void update(const VRCAction& lastAction);
     void draw();
 
 private:
     void create(const QMatrix4x4 &projection, const QMatrix4x4 &camera, const QMatrix4x4 &world, const QMatrix4x4 &model);
     static float getWidth(float size) { return 1.6f * log(size) - 0.7f; }
     uint getID(uint i, uint j, uint k) const { return j + k * _size + i * _size * _size; }
-    void completeRotation();
-    void setSide(int offset, VRCFace::Side side);
-    void setSide(VRCFace::Side face, int i, int j, VRCFace::Side side);
+    void updateVisualModel();
+    void setColor(int offset, VRCFace::Color color);
+    void setColor(VRCFace::Side face, int i, int j, VRCFace::Color color);
     std::array<Vertex, 4> getFaceVertices(VRCFace::Side side, uint color, QVector3D position, float cellWidth);
+    VRCAction::Layer getFillLayer(VRCAction::Layer layer);
+    VRCAction::Layer getRotationFace(VRCAction::Layer layer);
 
 private:
     const static float BORDER_WIDTH;
     uint _size;
 
-    int _rotationFlags;
+    VRCModel* _model;
+    QQueue<VRCAction> _actionsToAnimate;
+    VRCAction _animatingAction;
     bool _isAnimating;
     bool _fastMode;
 

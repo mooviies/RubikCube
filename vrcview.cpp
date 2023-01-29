@@ -12,12 +12,20 @@
 
 typedef VRCFace::Side Side;
 typedef VRCFace::Color Color;
+typedef VRCAction::Rotation Rotation;
+typedef VRCAction::Layer Layer;
+typedef VRCAction::LayerMask LayerMask;
+typedef VRCAction::Option Option;
 
 const float VRCView::BORDER_WIDTH = 0.015f;
 
-VRCView::VRCView(const VRCModel &model)
+VRCView::VRCView(VRCModel *model)
 {
-    _size = model.getSize();
+    _model = model;
+    _size = _model->getSize();
+    _fastMode = false;
+    _isAnimating = false;
+
     _cubeShaderProgram = nullptr;
     _colorBySide.insert(Side::Left, Color::Orange);
     _colorBySide.insert(Side::Front, Color::Green);
@@ -49,31 +57,88 @@ void VRCView::init(const QMatrix4x4 &projection, const QMatrix4x4 &camera, const
     create(projection, camera, world, model);
 }
 
-void VRCView::update(const VRCModel& model)
+void VRCView::update(const VRCAction &lastAction)
 {
-    _size = model.getSize();
+    _size = _model->getSize();
+
     _cubeModel->bindBuffer();
-    for(auto face : model)
+    for(auto face : *_model)
     {
         for(uint r = 0; r < _size; r++)
         {
             for(uint c = 0; c < _size; c++)
             {
-                setSide(face->getInitialSide(), r, c, face->getSide(r + 1, c + 1));
+                setColor(face->getInitialSide(), r, c, _colorBySide[face->getSide(r + 1, c + 1)]);
             }
         }
     }
     _cubeModel->releaseBuffer();
+
+    _actionsToAnimate.enqueue(lastAction);
 }
 
 void VRCView::draw()
 {
-    /*if(_isAnimating)
+    if(!_isAnimating)
+    {
+        if(!_actionsToAnimate.isEmpty())
+        {
+            _animatingAction = _actionsToAnimate.dequeue();
+            if(_fastMode)
+                updateVisualModel();
+            else
+            {
+                switch(getRotationFace(_animatingAction.getLayer()))
+                {
+                    case Layer::Back:
+                        _rotationVector = QVector3D(0, 0, 1);
+                        break;
+                    case Layer::Front:
+                        _rotationVector = QVector3D(0, 0, -1);
+                        break;
+                    case Layer::Left:
+                        _rotationVector = QVector3D(1, 0, 0);
+                        break;
+                    case Layer::Right:
+                        _rotationVector = QVector3D(-1, 0, 0);
+                        break;
+                    case Layer::Up:
+                        _rotationVector = QVector3D(0, -1, 0);
+                        break;
+                    case Layer::Down:
+                        _rotationVector = QVector3D(0, 1, 0);
+                        break;
+                    default:
+                        break;
+                }
+
+                switch(_animatingAction.getRotation())
+                {
+
+                    case VRCAction::Rotation::Clockwise:
+                        _targetRotation = 90;
+                        break;
+                    case VRCAction::Rotation::CounterClockwise:
+                        _targetRotation = 90;
+                        _rotationVector *= -1;
+                        break;
+                    case VRCAction::Rotation::Turn180:
+                        _targetRotation = 180;
+                        break;
+                }
+
+                _currentRotation = 0;
+                _isAnimating = true;
+            }
+
+        }
+    }
+    else if(_isAnimating)
     {
         _currentRotation += ROTATION_SPEED;
         if(_currentRotation >= _targetRotation)
         {
-            completeRotation();
+            updateVisualModel();
         }
         else
         {
@@ -81,83 +146,54 @@ void VRCView::draw()
             _layerRotation.rotate(_currentRotation, _rotationVector);
         }
 
-        int nbLayer = (_rotationFlags & RotationComponent::NbLayerMask) >> LAYER_MASK_SHIFT;
-        if(nbLayer > 1 && nbLayer < _size && !(_rotationFlags & RotationComponent::Wide))
+        auto layerNumber = _animatingAction.getLayerNumber();
+        if(layerNumber > 1 && layerNumber < _size && _animatingAction.getOption() == Option::None)
         {
-            int flags = _rotationFlags;
-            int rotation = flags & RotationComponent::LayerMask;
-            switch(rotation)
+            auto layer = getFillLayer(_animatingAction.getLayer());
+            if((uint)layer & (uint)LayerMask::Face)
             {
-            case RotationComponent::Up:
-                rotation = RotationComponent::Down;
-                nbLayer = _size - nbLayer + 1;
-                break;
-            case RotationComponent::Right:
-                rotation = RotationComponent::Left;
-                nbLayer = _size - nbLayer + 1;
-                break;
-            case RotationComponent::Front:
-                rotation = RotationComponent::Back;
-                nbLayer = _size - nbLayer + 1;
-                break;
-            default:
-                break;
+                layerNumber = _size - layerNumber + 1;
             }
-
-            switch(rotation)
+            else if((uint)layer & (uint)LayerMask::Center)
             {
-            case RotationComponent::Equator:
-                nbLayer = _size / 2;
-                rotation = RotationComponent::Down;
-                break;
-            case RotationComponent::Middle:
-                nbLayer = _size / 2;
-                rotation = RotationComponent::Left;
-                break;
-            case RotationComponent::Standing:
-                nbLayer = _size / 2;
-                rotation = RotationComponent::Back;
-                break;
+                layerNumber = _size / 2;
             }
 
             _stripTranslation.setToIdentity();
 
-            switch(rotation)
+            switch(layer)
             {
-            case RotationComponent::Down:
-                _stripTranslation.translate(0, _cellWidth * (nbLayer - 1), 0);
+            case Layer::Down:
+                _stripTranslation.translate(0, _cellWidth * (layerNumber - 1), 0);
                 _equatorFillModel->draw();
                 break;
-            case RotationComponent::Left:
-                _stripTranslation.translate(_cellWidth * (nbLayer - 1), 0, 0);
+            case Layer::Left:
+                _stripTranslation.translate(_cellWidth * (layerNumber - 1), 0, 0);
                 _middleFillModel->draw();
                 break;
-            case RotationComponent::Back:
-                _stripTranslation.translate(0, 0, _cellWidth * (nbLayer - 1));
+            case Layer::Back:
+                _stripTranslation.translate(0, 0, _cellWidth * (layerNumber - 1));
                 _standingFillModel->draw();
                 break;
             default:
                 break;
             }
         }
-    }*/
+    }
 
     _cubeModel->draw();
-    //_debugModel->draw();
-
-    //if(!_isAnimating && _currentCommand < _commands.size())
-    //    rotate(_commands[_currentCommand++], _fastMode);
 }
 
 void VRCView::create(const QMatrix4x4 &projection, const QMatrix4x4 &camera, const QMatrix4x4 &world, const QMatrix4x4 &model)
 {
-    int nbCubeVertices = NUMBER_SIDE * _size * _size * SQUARE_VERTICES_COUNT;
+    auto size = _model->getSize();
+    int nbCubeVertices = NUMBER_SIDE * size * size * SQUARE_VERTICES_COUNT;
     int nbVertices = nbCubeVertices;// + nbInsideVertices * 3;
     _sizeOfVertices = sizeof(Vertex) * nbVertices;
 
     Vertex *vertices = new Vertex[nbVertices];
-    _width = getWidth(_size);
-    _cellWidth = _width / float(_size);
+    _width = getWidth(size);
+    _cellWidth = _width / float(size);
     float halfCellWidth = _cellWidth / 2.0;
     float halfWidth = _width / 2.0;
     float widthLess = halfWidth - halfCellWidth;
@@ -299,21 +335,21 @@ void VRCView::create(const QMatrix4x4 &projection, const QMatrix4x4 &camera, con
     _standingFillModel->addUniform("translation", &_stripTranslation);
 }
 
-void VRCView::completeRotation()
+void VRCView::updateVisualModel()
 {
-    /*_cubeModel->bindBuffer();
+    _cubeModel->bindBuffer();
     foreach(int key, _rotating.keys())
     {
-        setSide(key, _rotating[key]);
+        setColor(key, _rotating[key]);
     }
     _cubeModel->releaseBuffer();
     _isAnimating = false;
-    _rotating.clear();*/
+    _rotating.clear();
 }
 
-void VRCView::setSide(int offset, VRCFace::Side side)
+void VRCView::setColor(int offset, VRCFace::Color color)
 {
-    QColor c((uint)_colorBySide[side]);
+    QColor c((uint)color);
     QVector3D cv(c.redF(), c.greenF(), c.blueF());
     int tb = 0;
 
@@ -328,12 +364,9 @@ void VRCView::setSide(int offset, VRCFace::Side side)
     }
 }
 
-void VRCView::setSide(Side face, int i, int j, VRCFace::Side side)
+void VRCView::setColor(Side side, int i, int j, VRCFace::Color color)
 {
-    int baseOffset = Vertex::stride() * getID((int)face, i, j) * SQUARE_VERTICES_COUNT;
-    setSide(baseOffset, side);
-
-    /*int baseOffset = Vertex::stride() * getID((int)side, i, j) * SQUARE_VERTICES_COUNT;
+    int baseOffset = Vertex::stride() * getID((int)side, i, j) * SQUARE_VERTICES_COUNT;
 
     if(_fastMode)
     {
@@ -350,7 +383,7 @@ void VRCView::setSide(Side face, int i, int j, VRCFace::Side side)
     {
         _cubeModel->write(baseOffset + Vertex::rotatingOffset(), &tb, sizeOfInt);
         baseOffset += Vertex::stride();
-    }*/
+    }
 }
 
 std::array<Vertex, 4> VRCView::getFaceVertices(VRCFace::Side side, uint color, QVector3D position, float cellWidth)
@@ -399,4 +432,46 @@ std::array<Vertex, 4> VRCView::getFaceVertices(VRCFace::Side side, uint color, Q
     }
 
     return vertices;
+}
+
+VRCAction::Layer VRCView::getFillLayer(VRCAction::Layer layer)
+{
+    switch(layer)
+    {
+        case Layer::Up:
+        case Layer::Equator:
+            return Layer::Down;
+        case Layer::Right:
+        case Layer::Middle:
+            return Layer::Left;
+        case Layer::Front:
+        case Layer::Standing:
+            return Layer::Back;
+        default:
+            return layer;
+    }
+}
+
+VRCAction::Layer VRCView::getRotationFace(VRCAction::Layer layer)
+{
+    switch(layer)
+    {
+        case VRCAction::Layer::Left:
+        case VRCAction::Layer::Front:
+        case VRCAction::Layer::Right:
+        case VRCAction::Layer::Back:
+        case VRCAction::Layer::Up:
+        case VRCAction::Layer::Down:
+            return layer;
+        case VRCAction::Layer::Middle:
+            return Layer::Left;
+        case VRCAction::Layer::Equator:
+        case VRCAction::Layer::CubeX:
+            return Layer::Right;
+        case VRCAction::Layer::CubeY:
+            return Layer::Up;
+        case VRCAction::Layer::Standing:
+        case VRCAction::Layer::CubeZ:
+            return Layer::Front;
+    }
 }

@@ -22,7 +22,7 @@ VRCAction::VRCAction(uint flags)
 
 VRCAction::VRCAction(Layer layer, Option option, Rotation rotation, ushort layerNumber)
 {
-    _flags = (layerNumber << LAYER_MASK_SHIFT) | (((uint)layer | (uint)option | (uint)rotation) & (uint)GeneralMask::Operation);
+    _flags = getFlags(layer, option, rotation, layerNumber);
 }
 
 VRCAction& VRCAction::operator=(const VRCAction &other)
@@ -53,6 +53,11 @@ VRCAction VRCAction::reversed() const
 
     action._flags ^= (uint)RotationMask::All;
     return action;
+}
+
+VRCAction VRCAction::with(Layer layer, Option option, Rotation rotation, ushort layerNumber)
+{
+    return VRCAction(getFlags(layer, option, rotation, layerNumber));
 }
 
 VRCAction VRCAction::withLayer(Layer layer) const

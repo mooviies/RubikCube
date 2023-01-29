@@ -143,12 +143,10 @@ void MainWindow::setModel(VRCModel *model)
 
     if(_view == nullptr)
     {
-        _view = new VRCView(*_model);
+        _view = new VRCView(_model);
         ui->openGLWidget->setView(_view);
         _model->setView(_view);
     }
-    else
-        _view->update(*model);
 
     if(_controller == nullptr)
         _controller = new VRCController(model);

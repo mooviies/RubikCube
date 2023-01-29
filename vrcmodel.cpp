@@ -55,7 +55,7 @@ bool VRCModel::execute(VRCAction action)
 
     if(_view != nullptr)
     {
-        _view->update(*this);
+        _view->update(action);
     }
 
     return true;
