@@ -18,29 +18,41 @@
     https://github.com/mooviies/RubikCube
 */
 
-#ifndef CUBE_H
-#define CUBE_H
+#ifndef VRCMESHFACE_H
+#define VRCMESHFACE_H
 
 #include "vertex.h"
-#include "constants.h"
+#include "vrcface.h"
 
-class Cube
+class VRCMeshCube
 {
 public:
-    Cube();
-    Cube(QVector3D position, float size);
+    enum class Color
+    {
+        Green  = 0x53D151,
+        Red    = 0xDB2617,
+        Yellow = 0xF2F70C,
+        White  = 0xFFFFFF,
+        Blue   = 0x026CDB,
+        Orange = 0xFF8E07,
+        Black  = 0x000000,
+        Error  = 0xFF0DFF
+    };
+
+    VRCMeshCube();
+    VRCMeshCube(QVector3D position, float size);
 
     int size() const { return _size; }
 
     void setPosition(const QVector3D& position);
     void setSize(float size);
-    void setColor(Face face, Color color);
+    void setColor(VRCFace::Side side, Color color);
     void setID(int id);
 
     void generate();
 
     const Vertex* vertices() const { return _vertices; }
-    const Vertex* vertices(Face face) const;
+    const Vertex* vertices(VRCFace::Side face) const;
     int verticesSize() { return sizeof(_vertices); }
 
 private:
@@ -52,4 +64,4 @@ private:
     int _id;
 };
 
-#endif // CUBE_H
+#endif // VRCMESHFACE_H

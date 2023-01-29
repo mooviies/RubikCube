@@ -1,31 +1,31 @@
-#include "opengl3dmodel.h"
+#include "meshopengl.h"
 #include "qopenglfunctions.h"
 
-OpenGL3DModel::OpenGL3DModel(QOpenGLShaderProgram *shader, const Vertex* vertices, int nbVertices, QOpenGLBuffer::UsagePattern usage, GLenum mode)
+MeshOpenGL::MeshOpenGL(QOpenGLShaderProgram *shader, const Vertex* vertices, int nbVertices, QOpenGLBuffer::UsagePattern usage, GLenum mode)
     : _shader(shader), _mode(mode)
 {
     setVertices(vertices, nbVertices);
     build(usage);
 }
 
-OpenGL3DModel::~OpenGL3DModel()
+MeshOpenGL::~MeshOpenGL()
 {
     _buffer.destroy();
     _vao.destroy();
     delete[] _vertices;
 }
 
-void OpenGL3DModel::addUniform(const QString& name, const QMatrix4x4* m)
+void MeshOpenGL::addUniform(const QString& name, const QMatrix4x4* m)
 {
     _uniformMatrices[_shader->uniformLocation(name)] = m;
 }
 
-void OpenGL3DModel::addUniform(const QString& name, const float* f)
+void MeshOpenGL::addUniform(const QString& name, const float* f)
 {
     _uniformFloats[_shader->uniformLocation(name)] = f;
 }
 
-void OpenGL3DModel::setVertices(const Vertex* vertices, int nbVertices)
+void MeshOpenGL::setVertices(const Vertex* vertices, int nbVertices)
 {
     _nbVertices = nbVertices;
     _vertices = new Vertex[nbVertices];
@@ -36,12 +36,12 @@ void OpenGL3DModel::setVertices(const Vertex* vertices, int nbVertices)
 }
 
 
-void OpenGL3DModel::write(int offset, const void* data, int count)
+void MeshOpenGL::write(int offset, const void* data, int count)
 {
     _buffer.write(offset, data, count);
 }
 
-void OpenGL3DModel::draw()
+void MeshOpenGL::draw()
 {
     QOpenGLFunctions *f = QOpenGLContext::currentContext()->functions();
 
@@ -64,7 +64,7 @@ void OpenGL3DModel::draw()
     _shader->release();
 }
 
-void OpenGL3DModel::build(QOpenGLBuffer::UsagePattern usage)
+void MeshOpenGL::build(QOpenGLBuffer::UsagePattern usage)
 {
     _buffer.create();
     _vao.create();

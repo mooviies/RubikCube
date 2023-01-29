@@ -28,15 +28,15 @@ class Vertex
 {
 public:
     // Constructors
-    Q_DECL_CONSTEXPR Vertex() : _rotating(0) {}
+    constexpr Vertex() : _rotating(0) {}
     Vertex(const QVector3D &position, const QVector2D &uv, uint color) : _position(position), _uv(uv), _rotating(0) { setColor(color); }
 
     // Accessors / Mutators
-    inline Q_DECL_CONSTEXPR const QVector3D& position() const { return _position; }
-    inline Q_DECL_CONSTEXPR const QVector2D& uv() const { return _uv; }
-    inline Q_DECL_CONSTEXPR const QVector3D& color() const { return _color; }
-    //inline Q_DECL_CONSTEXPR float borderwidth() const { return _borderWidth; }
-    inline Q_DECL_CONSTEXPR float rotating() const { return _rotating; }
+    inline constexpr const QVector3D& position() const { return _position; }
+    inline constexpr const QVector2D& uv() const { return _uv; }
+    inline constexpr const QVector3D& color() const { return _color; }
+    //inline constexpr float borderwidth() const { return _borderWidth; }
+    inline constexpr float rotating() const { return _rotating; }
     inline void setPosition(const QVector3D& position) { _position = position; }
     inline void setUV(const QVector2D& uv) { _uv = uv; }
     inline void setColor(uint color) { _color = QVector3D(float(color >> 16) / 255.0f, float((color >> 8) & 0xFF) / 255.0f, float(color & 0xFF) / 255.0f); }
@@ -50,12 +50,12 @@ public:
     //static const int BorderTupleSize = 1;
     static const int ROTATING_TUPLE_SIZE = 1;
 
-    inline static Q_DECL_CONSTEXPR int positionOffset() { return offsetof(Vertex, _position); }
-    inline static Q_DECL_CONSTEXPR int uvOffset() { return offsetof(Vertex, _uv); }
-    inline static Q_DECL_CONSTEXPR int colorOffset() { return offsetof(Vertex, _color); }
-    //inline static Q_DECL_CONSTEXPR int borderWidthOffset() { return offsetof(Vertex, _borderWidth); }
-    inline static Q_DECL_CONSTEXPR int rotatingOffset() { return offsetof(Vertex, _rotating); }
-    inline static Q_DECL_CONSTEXPR int stride() { return sizeof(Vertex); }
+    inline static constexpr int positionOffset() { return offsetof(Vertex, _position); }
+    inline static constexpr int uvOffset() { return offsetof(Vertex, _uv); }
+    inline static constexpr int colorOffset() { return offsetof(Vertex, _color); }
+    //inline static constexpr int borderWidthOffset() { return offsetof(Vertex, _borderWidth); }
+    inline static constexpr int rotatingOffset() { return offsetof(Vertex, _rotating); }
+    inline static constexpr int stride() { return sizeof(Vertex); }
 
 private:
     QVector3D _position;

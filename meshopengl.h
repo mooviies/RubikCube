@@ -1,5 +1,5 @@
-#ifndef OPENGL3DMODEL_H
-#define OPENGL3DMODEL_H
+#ifndef MESHOPENGL_H
+#define MESHOPENGL_H
 
 #include <QMap>
 #include <QMatrix4x4>
@@ -10,11 +10,11 @@
 
 #include "vertex.h"
 
-class OpenGL3DModel
+class MeshOpenGL
 {
 public:
-    OpenGL3DModel(QOpenGLShaderProgram* shader, const Vertex* vertices, int nbVertices, QOpenGLBuffer::UsagePattern usage, GLenum mode = GL_QUADS);
-    ~OpenGL3DModel();
+    MeshOpenGL(QOpenGLShaderProgram* shader, const Vertex* vertices, int nbVertices, QOpenGLBuffer::UsagePattern usage, GLenum mode = GL_QUADS);
+    ~MeshOpenGL();
 
     void addUniform(const QString& name, const QMatrix4x4* m);
     void addUniform(const QString& name, const float* f);
@@ -45,4 +45,4 @@ private:
     GLenum _mode;
 };
 
-#endif // OPENGL3DMODEL_H
+#endif // MESHOPENGL_H

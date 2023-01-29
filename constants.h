@@ -23,57 +23,7 @@
 
 #include <QString>
 
-enum Color
-{
-    Green  = 0x53D151,
-    Red    = 0xDB2617,
-    Yellow = 0xF2F70C,
-    White  = 0xFFFFFF,
-    Blue   = 0x026CDB,
-    Orange = 0xFF8E07,
-    Black  = 0x000000,
-    Error  = 0xFF0DFF
-};
-
-enum class Face
-{
-    Left  = 0,
-    Front = 1,
-    Right = 2,
-    Back  = 3,
-    Up    = 4,
-    Down  = 5
-};
-
-enum RotationComponent
-{
-    Left             = 0x0000100,
-    Front            = 0x0000200,
-    Right            = 0x0000400,
-    Back             = 0x0000800,
-    Up               = 0x0001000,
-    Down             = 0x0002000,
-    Middle           = 0x0004000,
-    Equator          = 0x0008000,
-    Horizontal       = 0x0010000,
-    Standing         = 0x0020000,
-    CenterLayers     = 0x003C000,
-    CubeX            = 0x0040000,
-    CubeY            = 0x0080000,
-    CubeZ            = 0x0100000,
-    WholeCube        = 0x01C0000,
-    Wide             = 0x0200000,
-    Clockwise        = 0x0400000,
-    CounterClockwise = 0x0800000,
-    Turn180          = 0x1000000,
-    ReverseMask      = 0x0C00000,
-    NbLayerMask      = 0x00000FF,
-    ComponentsMask   = 0xFFFFF00,
-    MandatoryMaskA   = 0x01FFF00,
-    MandatoryMaskB   = 0x1C00000
-};
-
-enum LayerOut
+enum LayerMain
 {
     L_Left       = 'L',
     L_Front      = 'F',
@@ -83,14 +33,13 @@ enum LayerOut
     L_Down       = 'D',
     L_Middle     = 'M',
     L_Equator    = 'E',
-    L_Horizontal = 'H',
     L_Standing   = 'S',
     L_CubeX      = 'x',
     L_CubeY      = 'y',
     L_CubeZ      = 'z'
 };
 
-enum LayerIn
+enum LayerSub
 {
     Li_Left  = 'l',
     Li_Front = 'f',
@@ -116,11 +65,11 @@ const int MAX_SIZE = 100;
 
 const float ROTATION_SPEED = 6;
 
-const QString SETTINGS_KEY_SIZE = "general/size";
-const QString SETTINGS_KEY_SAVE = "general/save";
-const QString SETTINGS_KEY_FAST_MODE = "options/fastmode";
-const QString SETTINGS_KEY_WINDOW_STATE = "window/state";
-const QString SETTINGS_KEY_WINDOW_RECT = "window/rect";
+const char* const SETTINGS_KEY_SIZE = "general/size";
+const char* const SETTINGS_KEY_SAVE = "general/save";
+const char* const SETTINGS_KEY_FAST_MODE = "options/fastmode";
+const char* const SETTINGS_KEY_WINDOW_STATE = "window/state";
+const char* const SETTINGS_KEY_WINDOW_RECT = "window/rect";
 
 const float DEPTH_NEAR = 0.1f;
 const float DEPTH_FAR = 30.0f;

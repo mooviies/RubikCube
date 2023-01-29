@@ -28,7 +28,9 @@
 #include <QDialog>
 #include <QtAdvancedStylesheet.h>
 
-#include "rubikscube.h"
+#include "vrcmodel.h"
+#include "vrcview.h"
+#include "vrccontroller.h"
 #include "ui_dialoghelp.h"
 
 namespace Ui {
@@ -45,7 +47,7 @@ public:
 
     bool rotate(int flags);
     bool rotate(const QList<int>& flagsList);
-    void setCube(RubiksCube *cube);
+    void setModel(VRCModel *model);
 
 protected:
     QList<int> getCommands(const QString& expression);
@@ -69,6 +71,7 @@ private slots:
     void loadSettings();
     void loadStyle();
 
+    void reverse();
     void execute();
 
     void scramble();
@@ -79,6 +82,8 @@ private slots:
     void rotateCounterClockwise();
     void rotateTurn180();
 
+    void uncheckLayerControls(QPushButton* exception);
+
     void pushF(bool checked);
     void pushB(bool checked);
     void pushL(bool checked);
@@ -88,28 +93,21 @@ private slots:
     void pushE(bool checked);
     void pushM(bool checked);
     void pushS(bool checked);
-    void pushX(bool checked);
-    void pushY(bool checked);
-    void pushZ(bool checked);
-
-    void pushf(bool checked);
-    void pushb(bool checked);
-    void pushl(bool checked);
-    void pushr(bool checked);
-    void pushu(bool checked);
-    void pushd(bool checked);
+    void pushx(bool checked);
+    void pushy(bool checked);
+    void pushz(bool checked);
 
     void nbLChanged(int value);
 
 private:
     Ui::MainWindow *ui;
-    RubiksCube *_cube;
+    VRCModel *_model;
+    VRCView *_view;
+    VRCController *_controller;
 
-    QList<QPushButton*> _groupA;
-    QList<QPushButton*> _groupB;
+    QList<QPushButton*> _layerControls;
 
     int _currentCommand;
-    QList<int> _history;
 
     QSettings _settings;
     Ui::Dialog _aboutUI;

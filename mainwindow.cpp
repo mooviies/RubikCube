@@ -30,6 +30,8 @@
 #include <QScreen>
 #include <QWindowStateChangeEvent>
 
+#include "constants.h"
+
 using namespace acss;
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -52,6 +54,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(ui->pushButtonNew, SIGNAL(clicked(bool)), this, SLOT(newCube()));
     connect(ui->pushButtonReset, SIGNAL(clicked(bool)), this, SLOT(reset()));
+    connect(ui->pushButtonReverse, SIGNAL(clicked(bool)), this, SLOT(reverse()));
     connect(ui->pushButtonExecute, SIGNAL(clicked(bool)), this, SLOT(execute()));
     connect(ui->pushButtonScramble, SIGNAL(clicked(bool)), this, SLOT(scramble()));
     connect(ui->pushButtonSolve, SIGNAL(clicked(bool)), this, SLOT(solve()));
@@ -69,38 +72,26 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->control_E, SIGNAL(toggled(bool)), this, SLOT(pushE(bool)));
     connect(ui->control_M, SIGNAL(toggled(bool)), this, SLOT(pushM(bool)));
     connect(ui->control_S, SIGNAL(toggled(bool)), this, SLOT(pushS(bool)));
-    connect(ui->control_x, SIGNAL(toggled(bool)), this, SLOT(pushX(bool)));
-    connect(ui->control_y, SIGNAL(toggled(bool)), this, SLOT(pushY(bool)));
-    connect(ui->control_z, SIGNAL(toggled(bool)), this, SLOT(pushZ(bool)));
+    connect(ui->control_x, SIGNAL(toggled(bool)), this, SLOT(pushx(bool)));
+    connect(ui->control_y, SIGNAL(toggled(bool)), this, SLOT(pushy(bool)));
+    connect(ui->control_z, SIGNAL(toggled(bool)), this, SLOT(pushz(bool)));
 
-    connect(ui->control_f, SIGNAL(toggled(bool)), this, SLOT(pushf(bool)));
-    connect(ui->control_b, SIGNAL(toggled(bool)), this, SLOT(pushb(bool)));
-    connect(ui->control_l, SIGNAL(toggled(bool)), this, SLOT(pushl(bool)));
-    connect(ui->control_r, SIGNAL(toggled(bool)), this, SLOT(pushr(bool)));
-    connect(ui->control_u, SIGNAL(toggled(bool)), this, SLOT(pushu(bool)));
-    connect(ui->control_d, SIGNAL(toggled(bool)), this, SLOT(pushd(bool)));
+    _layerControls.append(ui->control_F);
+    _layerControls.append(ui->control_B);
+    _layerControls.append(ui->control_L);
+    _layerControls.append(ui->control_R);
+    _layerControls.append(ui->control_U);
+    _layerControls.append(ui->control_D);
+    _layerControls.append(ui->control_E);
+    _layerControls.append(ui->control_M);
+    _layerControls.append(ui->control_S);
+    _layerControls.append(ui->control_x);
+    _layerControls.append(ui->control_y);
+    _layerControls.append(ui->control_z);
 
-    _groupA.append(ui->control_F);
-    _groupA.append(ui->control_B);
-    _groupA.append(ui->control_L);
-    _groupA.append(ui->control_R);
-    _groupA.append(ui->control_U);
-    _groupA.append(ui->control_D);
-    _groupA.append(ui->control_E);
-    _groupA.append(ui->control_M);
-    _groupA.append(ui->control_S);
-    _groupA.append(ui->control_x);
-    _groupA.append(ui->control_y);
-    _groupA.append(ui->control_z);
-
-    _groupB.append(ui->control_f);
-    _groupB.append(ui->control_b);
-    _groupB.append(ui->control_l);
-    _groupB.append(ui->control_r);
-    _groupB.append(ui->control_u);
-    _groupB.append(ui->control_d);
-
-    setCube(new RubiksCube(ui->openGLWidget, _settings.value(SETTINGS_KEY_SIZE, 3).toInt()));
+    _view = nullptr;
+    _controller = nullptr;
+    setModel(new VRCModel(_settings.value(SETTINGS_KEY_SIZE, 3).toInt()));
     loadSettings();
     loadStyle();
 }
@@ -108,43 +99,60 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
     delete ui;
-    delete _cube;
+    delete _model;
+    delete _view;
+    delete _controller;
 }
 
 bool MainWindow::rotate(int flags)
 {
-    if(_cube->rotate(flags, ui->actionFastMode->isChecked()))
+    /*if(_cube->rotate(flags, ui->actionFastMode->isChecked()))
     {
         addToHistory(flags);
         return true;
-    }
+    }*/
     return false;
 }
 
 bool MainWindow::rotate(const QList<int>& flagsList)
 {
-    if(_cube->rotate(flagsList, ui->actionFastMode->isChecked()))
+    /*if(_cube->rotate(flagsList, ui->actionFastMode->isChecked()))
     {
         addToHistory(flagsList);
         return true;
-    }
+    }*/
     return false;
 }
 
-void MainWindow::setCube(RubiksCube *cube)
+void MainWindow::setModel(VRCModel *model)
 {
-    _history.clear();
+    /*_history.clear();
     _currentCommand = -1;
     ui->textEditHistory->clear();
 
     _cube = cube;
     ui->openGLWidget->setCube(_cube);
-    ui->control_nbLayer->setMaximum(_cube->maxLayer());
+    ui->control_nbLayer->setMaximum(_cube->maxLayer());*/
+
+    _model = model;
+
+    if(_view == nullptr)
+    {
+        _view = new VRCView();
+        ui->openGLWidget->setView(_view);
+    }
+    else
+        _view->update(*model);
+
+    if(_controller == nullptr)
+        _controller = new VRCController(model);
+    else
+        _controller->setModel(model);
 }
 
 QList<int> MainWindow::getCommands(const QString& expression)
 {
-    QRegularExpression re("(\\d*)(F|B|R|L|U|D|x|y|z|M|E|H|S)?(f|b|r|l|u|d)?(w?)((?:2|')?)");
+    /*QRegularExpression re("(\\d*)(F|B|R|L|U|D|x|y|z|M|E|H|S)?(f|b|r|l|u|d)?(w?)((?:2|')?)");
     auto iter = re.globalMatch(expression);
     QList<int> commands;
 
@@ -163,43 +171,40 @@ QList<int> MainWindow::getCommands(const QString& expression)
         {
             switch(face[0].toLatin1())
             {
-            case LayerOut::L_Up:
+            case LayerMain::L_Up:
                 flags |= RotationComponent::Up;
                 break;
-            case LayerOut::L_Down:
+            case LayerMain::L_Down:
                 flags |= RotationComponent::Down;
                 break;
-            case LayerOut::L_Front:
+            case LayerMain::L_Front:
                 flags |= RotationComponent::Front;
                 break;
-            case LayerOut::L_Back:
+            case LayerMain::L_Back:
                 flags |= RotationComponent::Back;
                 break;
-            case LayerOut::L_Left:
+            case LayerMain::L_Left:
                 flags |= RotationComponent::Left;
                 break;
-            case LayerOut::L_Right:
+            case LayerMain::L_Right:
                 flags |= RotationComponent::Right;
                 break;
-            case LayerOut::L_Equator:
+            case LayerMain::L_Equator:
                 flags |= RotationComponent::Equator;
                 break;
-            case LayerOut::L_Horizontal:
-                flags |= RotationComponent::Horizontal;
-                break;
-            case LayerOut::L_Middle:
+            case LayerMain::L_Middle:
                 flags |= RotationComponent::Middle;
                 break;
-            case LayerOut::L_Standing:
+            case LayerMain::L_Standing:
                 flags |= RotationComponent::Standing;
                 break;
-            case LayerOut::L_CubeX:
+            case LayerMain::L_CubeX:
                 flags |= RotationComponent::CubeX;
                 break;
-            case LayerOut::L_CubeY:
+            case LayerMain::L_CubeY:
                 flags |= RotationComponent::CubeY;
                 break;
-            case LayerOut::L_CubeZ:
+            case LayerMain::L_CubeZ:
                 flags |= RotationComponent::CubeZ;
                 break;
             }
@@ -217,22 +222,22 @@ QList<int> MainWindow::getCommands(const QString& expression)
             {
                 switch(faceSmall[0].toLatin1())
                 {
-                case LayerIn::Li_Up:
+                case LayerSub::Li_Up:
                     flags |= RotationComponent::Up;
                     break;
-                case LayerIn::Li_Down:
+                case LayerSub::Li_Down:
                     flags |= RotationComponent::Down;
                     break;
-                case LayerIn::Li_Front:
+                case LayerSub::Li_Front:
                     flags |= RotationComponent::Front;
                     break;
-                case LayerIn::Li_Back:
+                case LayerSub::Li_Back:
                     flags |= RotationComponent::Back;
                     break;
-                case LayerIn::Li_Left:
+                case LayerSub::Li_Left:
                     flags |= RotationComponent::Left;
                     break;
-                case LayerIn::Li_Right:
+                case LayerSub::Li_Right:
                     flags |= RotationComponent::Right;
                     break;
                 }
@@ -260,12 +265,12 @@ QList<int> MainWindow::getCommands(const QString& expression)
         commands.append(flags);
     }
 
-    return commands;
+    return commands;*/
 }
 
 void MainWindow::addToHistory(int flags)
 {
-    if(_currentCommand < _history.size() - 1)
+    /*if(_currentCommand < _history.size() - 1)
     {
         int toRemove = _history.size() - _currentCommand - 1;
         for(int i = 0; i < toRemove; i++)
@@ -274,12 +279,12 @@ void MainWindow::addToHistory(int flags)
     _history.append(flags);
     _currentCommand = _history.size() - 1;
     ui->actionUndo->setEnabled(true);
-    ui->actionRedo->setEnabled(false);
+    ui->actionRedo->setEnabled(false);*/
 }
 
 void MainWindow::addToHistory(const QList<int>& flagsList)
 {
-    if(_currentCommand < _history.size() - 1)
+    /*if(_currentCommand < _history.size() - 1)
     {
         int toRemove = _history.size() - _currentCommand - 1;
         for(int i = 0; i < toRemove; i++)
@@ -291,10 +296,10 @@ void MainWindow::addToHistory(const QList<int>& flagsList)
 
     _currentCommand = _history.size() - 1;
     ui->actionUndo->setEnabled(true);
-    ui->actionRedo->setEnabled(false);
+    ui->actionRedo->setEnabled(false);*/
 }
 
-void MainWindow::moveEvent(QMoveEvent *event)
+void MainWindow::moveEvent(QMoveEvent *)
 {
     if(!(this->windowState() & Qt::WindowMaximized))
     {
@@ -302,7 +307,7 @@ void MainWindow::moveEvent(QMoveEvent *event)
     }
 }
 
-void MainWindow::resizeEvent(QResizeEvent *event)
+void MainWindow::resizeEvent(QResizeEvent *)
 {
     _settings.setValue(SETTINGS_KEY_WINDOW_RECT, this->geometry());
 }
@@ -320,19 +325,19 @@ void MainWindow::changeEvent(QEvent *event)
 
 void MainWindow::newCube()
 {
-    bool ok = false;
+    /*bool ok = false;
     int size = QInputDialog::getInt(this, tr("New Cube"), tr("Cube Size"), _cube->size(), 2, 100, 1, &ok);
     if(ok)
     {
         delete _cube;
-        setCube(new RubiksCube(ui->openGLWidget, size));
+        setCube(new VirtualRubiksCube(ui->openGLWidget, size));
         _settings.setValue(SETTINGS_KEY_SIZE, size);
-    }
+    }*/
 }
 
 void MainWindow::save()
 {
-    QString filename = QFileDialog::getSaveFileName(this, tr("Save Cube"), _settings.value(SETTINGS_KEY_SAVE, QDir::currentPath()).toString(), tr("Text files (*.txt)"));
+    /*QString filename = QFileDialog::getSaveFileName(this, tr("Save Cube"), _settings.value(SETTINGS_KEY_SAVE, QDir::currentPath()).toString(), tr("Text files (*.txt)"));
     if(!filename.isEmpty())
     {
         QFileInfo info(filename);
@@ -349,12 +354,12 @@ void MainWindow::save()
         out << "cubesize=" << QVariant(_cube->size()).toString() << "\n";
         out << ui->textEditHistory->toPlainText();
         file.close();
-    }
+    }*/
 }
 
 void MainWindow::load()
 {
-    QString filename = QFileDialog::getOpenFileName(this, tr("Open Cube"), _settings.value(SETTINGS_KEY_SAVE, QDir::currentPath()).toString(), tr("Text files (*.txt)"));
+    /*QString filename = QFileDialog::getOpenFileName(this, tr("Open Cube"), _settings.value(SETTINGS_KEY_SAVE, QDir::currentPath()).toString(), tr("Text files (*.txt)"));
     if(!filename.isEmpty())
     {
         QFileInfo info(filename);
@@ -373,7 +378,7 @@ void MainWindow::load()
             {
                 int size = sizeStr.remove("cubesize=").toInt();
                 if(size >= 2 && size <= 100)
-                    setCube(new RubiksCube(ui->openGLWidget, size));
+                    setCube(new VirtualRubiksCube(ui->openGLWidget, size));
             }
             else
             {
@@ -386,14 +391,14 @@ void MainWindow::load()
             }
             file.close();
         }
-    }
+    }*/
 }
 
 void MainWindow::reset()
 {
-    int size = _cube->size();
+    /*int size = _cube->size();
     delete _cube;
-    setCube(new RubiksCube(ui->openGLWidget, size));
+    setCube(new VirtualRubiksCube(ui->openGLWidget, size));*/
 }
 
 void MainWindow::undo()
@@ -476,6 +481,13 @@ void MainWindow::loadStyle()
     qApp->setStyleSheet(stylesheet);
 }
 
+void MainWindow::reverse()
+{
+    auto commands = getCommands(ui->textEditActions->toPlainText());
+    std::reverse(std::begin(commands), std::end(commands));
+    ui->textEditActions->clear();
+}
+
 void MainWindow::execute()
 {
     auto commands = getCommands(ui->textEditActions->toPlainText());
@@ -486,17 +498,17 @@ void MainWindow::execute()
 
 void MainWindow::scramble()
 {
-    ui->tabWidget->setCurrentIndex(0);
+    /*ui->tabWidget->setCurrentIndex(0);
     ui->textEditActions->clear();
     QString expr;
 
     QList<char> mainFaces;
-    mainFaces.append(LayerOut::L_Up);
-    mainFaces.append(LayerOut::L_Down);
-    mainFaces.append(LayerOut::L_Left);
-    mainFaces.append(LayerOut::L_Right);
-    mainFaces.append(LayerOut::L_Front);
-    mainFaces.append(LayerOut::L_Back);
+    mainFaces.append(LayerMain::L_Up);
+    mainFaces.append(LayerMain::L_Down);
+    mainFaces.append(LayerMain::L_Left);
+    mainFaces.append(LayerMain::L_Right);
+    mainFaces.append(LayerMain::L_Front);
+    mainFaces.append(LayerMain::L_Back);
 
     QList<QString> rotations;
     rotations.append("");
@@ -538,7 +550,7 @@ void MainWindow::scramble()
         expr += el + " ";
     }
 
-    ui->textEditActions->setPlainText(expr);
+    ui->textEditActions->setPlainText(expr);*/
 }
 
 void MainWindow::solve()
@@ -548,70 +560,70 @@ void MainWindow::solve()
 
 void MainWindow::rotateWithControls(int flags)
 {
-    QString expr;
+    /*QString expr;
     if(ui->control_B->isChecked())
     {
         flags |= RotationComponent::Back;
-        expr = QChar::fromLatin1(LayerOut::L_Back);
+        expr = QChar::fromLatin1(LayerMain::L_Back);
     }
     else if(ui->control_F->isChecked())
     {
         flags |= RotationComponent::Front;
-        expr = QChar::fromLatin1(LayerOut::L_Front);
+        expr = QChar::fromLatin1(LayerMain::L_Front);
     }
     else if(ui->control_D->isChecked())
     {
         flags |= RotationComponent::Down;
-        expr = QChar::fromLatin1(LayerOut::L_Down);
+        expr = QChar::fromLatin1(LayerMain::L_Down);
     }
     else if(ui->control_U->isChecked())
     {
         flags |= RotationComponent::Up;
-        expr = QChar::fromLatin1(LayerOut::L_Up);
+        expr = QChar::fromLatin1(LayerMain::L_Up);
     }
     else if(ui->control_L->isChecked())
     {
         flags |= RotationComponent::Left;
-        expr = QChar::fromLatin1(LayerOut::L_Left);
+        expr = QChar::fromLatin1(LayerMain::L_Left);
     }
     else if(ui->control_R->isChecked())
     {
         flags |= RotationComponent::Right;
-        expr = QChar::fromLatin1(LayerOut::L_Right);
+        expr = QChar::fromLatin1(LayerMain::L_Right);
     }
     else if(ui->control_E->isChecked())
     {
         flags |= RotationComponent::Equator;
-        expr = QChar::fromLatin1(LayerOut::L_Equator);
+        expr = QChar::fromLatin1(LayerMain::L_Equator);
     }
     else if(ui->control_M->isChecked())
     {
         flags |= RotationComponent::Middle;
-        expr = QChar::fromLatin1(LayerOut::L_Middle);
+        expr = QChar::fromLatin1(LayerMain::L_Middle);
     }
     else if(ui->control_S->isChecked())
     {
         flags |= RotationComponent::Standing;
-        expr = QChar::fromLatin1(LayerOut::L_Standing);
+        expr = QChar::fromLatin1(LayerMain::L_Standing);
     }
     else if(ui->control_x->isChecked())
     {
         flags |= RotationComponent::CubeX;
-        expr = QChar::fromLatin1(LayerOut::L_CubeX);
+        expr = QChar::fromLatin1(LayerMain::L_CubeX);
     }
     else if(ui->control_y->isChecked())
     {
         flags |= RotationComponent::CubeY;
-        expr = QChar::fromLatin1(LayerOut::L_CubeY);
+        expr = QChar::fromLatin1(LayerMain::L_CubeY);
     }
     else if(ui->control_z->isChecked())
     {
         flags |= RotationComponent::CubeZ;
-        expr = QChar::fromLatin1(LayerOut::L_CubeZ);
+        expr = QChar::fromLatin1(LayerMain::L_CubeZ);
     }
 
     int nbLayer = ui->control_nbLayer->value();
-    flags += nbLayer;
+    flags |= nbLayer << LAYER_MASK_SHIFT;
 
     if(ui->control_w->isChecked())
     {
@@ -640,301 +652,119 @@ void MainWindow::rotateWithControls(int flags)
         }
     }
 
-    if(flags & RotationComponent::CounterClockwise)
-        expr.append(SYMBOL_COUNTER_CLOCKWISE);
-    else if(flags & RotationComponent::Turn180)
+    if((flags & RotationComponent::Turn180) == RotationComponent::Turn180)
         expr.append(SYMBOL_180);
+    else if(flags & RotationComponent::CounterClockwise)
+        expr.append(SYMBOL_COUNTER_CLOCKWISE);
 
     if(rotate(flags))
-        ui->textEditHistory->append(expr);
+        ui->textEditHistory->append(expr);*/
 }
 
 void MainWindow::rotateClockwise()
 {
-    rotateWithControls(RotationComponent::Clockwise);
+    //rotateWithControls(RotationComponent::Clockwise);
 }
 
 void MainWindow::rotateCounterClockwise()
 {
-    rotateWithControls(RotationComponent::CounterClockwise);
+    //rotateWithControls(RotationComponent::CounterClockwise);
 }
 
 void MainWindow::rotateTurn180()
 {
-    rotateWithControls(RotationComponent::Turn180);
+    //rotateWithControls(RotationComponent::Turn180);
+}
+
+void MainWindow::uncheckLayerControls(QPushButton* exception)
+{
+    foreach(auto obj, _layerControls)
+    {
+        if(obj == exception) continue;
+
+        obj->setChecked(false);
+    }
 }
 
 void MainWindow::pushF(bool checked)
 {
-    if(!checked)
-    {
-        ui->control_f->setChecked(false);
-        return;
-    }
-
-    foreach(auto obj, _groupA)
-    {
-        if(obj != ui->control_F)
-            obj->setChecked(false);
-    }
+    if(!checked) return;
+    uncheckLayerControls(ui->control_F);
 }
 
 void MainWindow::pushB(bool checked)
 {
-    if(!checked)
-    {
-        ui->control_b->setChecked(false);
-        return;
-    }
-
-    foreach(auto obj, _groupA)
-    {
-        if(obj != ui->control_B)
-            obj->setChecked(false);
-    }
+    if(!checked) return;
+    uncheckLayerControls(ui->control_B);
 }
 
 void MainWindow::pushL(bool checked)
 {
-    if(!checked)
-    {
-        ui->control_l->setChecked(false);
-        return;
-    }
-
-    foreach(auto obj, _groupA)
-    {
-        if(obj != ui->control_L)
-            obj->setChecked(false);
-    }
+    if(!checked) return;
+    uncheckLayerControls(ui->control_L);
 }
 
 void MainWindow::pushR(bool checked)
 {
-    if(!checked)
-    {
-        ui->control_r->setChecked(false);
-        return;
-    }
-
-    foreach(auto obj, _groupA)
-    {
-        if(obj != ui->control_R)
-            obj->setChecked(false);
-    }
+    if(!checked) return;
+    uncheckLayerControls(ui->control_R);
 }
 
 void MainWindow::pushU(bool checked)
 {
-    if(!checked)
-    {
-        ui->control_u->setChecked(false);
-        return;
-    }
-
-    foreach(auto obj, _groupA)
-    {
-        if(obj != ui->control_U)
-            obj->setChecked(false);
-    }
+    if(!checked) return;
+    uncheckLayerControls(ui->control_U);
 }
 
 void MainWindow::pushD(bool checked)
 {
-    if(!checked)
-    {
-        ui->control_d->setChecked(false);
-        return;
-    }
-
-    foreach(auto obj, _groupA)
-    {
-        if(obj != ui->control_D)
-            obj->setChecked(false);
-    }
+    if(!checked) return;
+    uncheckLayerControls(ui->control_D);
 }
 
 void MainWindow::pushE(bool checked)
 {
     if(!checked) return;
-    foreach(auto obj, _groupA)
-    {
-        if(obj != ui->control_E)
-            obj->setChecked(false);
-    }
+    uncheckLayerControls(ui->control_E);
 }
 
 void MainWindow::pushM(bool checked)
 {
     if(!checked) return;
-    foreach(auto obj, _groupA)
-    {
-        if(obj != ui->control_M)
-            obj->setChecked(false);
-    }
+    uncheckLayerControls(ui->control_M);
 }
 void MainWindow::pushS(bool checked)
 {
     if(!checked) return;
-    foreach(auto obj, _groupA)
-    {
-        if(obj != ui->control_S)
-            obj->setChecked(false);
-    }
+    uncheckLayerControls(ui->control_S);
 }
 
-void MainWindow::pushX(bool checked)
+void MainWindow::pushx(bool checked)
 {
     if(!checked) return;
-    foreach(auto obj, _groupA)
-    {
-        if(obj != ui->control_x)
-            obj->setChecked(false);
-    }
+    uncheckLayerControls(ui->control_x);
 }
 
-void MainWindow::pushY(bool checked)
+void MainWindow::pushy(bool checked)
 {
     if(!checked) return;
-    foreach(auto obj, _groupA)
-    {
-        if(obj != ui->control_y)
-            obj->setChecked(false);
-    }
+    uncheckLayerControls(ui->control_y);
 }
 
-void MainWindow::pushZ(bool checked)
+void MainWindow::pushz(bool checked)
 {
     if(!checked) return;
-    foreach(auto obj, _groupA)
-    {
-        if(obj != ui->control_z)
-            obj->setChecked(false);
-    }
-}
-
-void MainWindow::pushf(bool checked)
-{
-    if(!checked)
-    {
-        ui->control_w->setChecked(false);
-        ui->control_nbLayer->setValue(1);
-        return;
-    }
-
-    foreach(auto obj, _groupB)
-    {
-        if(obj != ui->control_f)
-            obj->setChecked(false);
-    }
-    ui->control_F->setChecked(true);
-    ui->control_w->setChecked(true);
-    ui->control_nbLayer->setValue(2);
-}
-
-void MainWindow::pushb(bool checked)
-{
-    if(!checked)
-    {
-        ui->control_w->setChecked(false);
-        ui->control_nbLayer->setValue(1);
-        return;
-    }
-
-    foreach(auto obj, _groupB)
-    {
-        if(obj != ui->control_b)
-            obj->setChecked(false);
-    }
-    ui->control_B->setChecked(true);
-    ui->control_w->setChecked(true);
-    ui->control_nbLayer->setValue(2);
-}
-
-void MainWindow::pushl(bool checked)
-{
-    if(!checked)
-    {
-        ui->control_w->setChecked(false);
-        ui->control_nbLayer->setValue(1);
-        return;
-    }
-
-    foreach(auto obj, _groupB)
-    {
-        if(obj != ui->control_l)
-            obj->setChecked(false);
-    }
-    ui->control_L->setChecked(true);
-    ui->control_w->setChecked(true);
-    ui->control_nbLayer->setValue(2);
-}
-
-void MainWindow::pushr(bool checked)
-{
-    if(!checked)
-    {
-        ui->control_w->setChecked(false);
-        ui->control_nbLayer->setValue(1);
-        return;
-    }
-
-    foreach(auto obj, _groupB)
-    {
-        if(obj != ui->control_r)
-            obj->setChecked(false);
-    }
-    ui->control_R->setChecked(true);
-    ui->control_w->setChecked(true);
-    ui->control_nbLayer->setValue(2);
-}
-
-void MainWindow::pushu(bool checked)
-{
-    if(!checked)
-    {
-        ui->control_w->setChecked(false);
-        ui->control_nbLayer->setValue(1);
-        return;
-    }
-
-    foreach(auto obj, _groupB)
-    {
-        if(obj != ui->control_u)
-            obj->setChecked(false);
-    }
-    ui->control_U->setChecked(true);
-    ui->control_w->setChecked(true);
-    ui->control_nbLayer->setValue(2);
-}
-
-void MainWindow::pushd(bool checked)
-{
-    if(!checked)
-    {
-        ui->control_w->setChecked(false);
-        ui->control_nbLayer->setValue(1);
-        return;
-    }
-
-    foreach(auto obj, _groupB)
-    {
-        if(obj != ui->control_d)
-            obj->setChecked(false);
-    }
-    ui->control_D->setChecked(true);
-    ui->control_w->setChecked(true);
-    ui->control_nbLayer->setValue(2);
+    uncheckLayerControls(ui->control_z);
 }
 
 void MainWindow::nbLChanged(int value)
 {
-    if(value == 1)
+    /*if(value == 1)
     {
         ui->control_w->setChecked(false);
-        foreach(auto obj, _groupB)
+        foreach(auto obj, _subLayerControls)
         {
             obj->setChecked(false);
         }
-    }
+    }*/
 }
