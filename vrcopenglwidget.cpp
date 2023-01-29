@@ -19,9 +19,9 @@ void VRCOpenGLWidget::setView(VRCView *view)
 {
     _view = view;
     _camera.setToIdentity();
-    _camera.translate(0, 0, -float(_view->getSize()) * (2.8));
-    _camera.rotate(45, 0, 1, 0);
-    _camera.rotate(25, 1, 0, 1);
+    _camera.translate(0, 0, -float(_view->getSize()));
+    _camera.rotate(-40, 0, 1, 0);
+    _camera.rotate(-22.5, -0.8, 0, 0.8);
 }
 
 void VRCOpenGLWidget::initializeGL()
