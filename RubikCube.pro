@@ -32,7 +32,6 @@ SOURCES += \
     vrccontroller.cpp \
     vrcface.cpp \
     vrchistory.cpp \
-    vrcmeshface.cpp \
     vrcmodel.cpp \
     vrcopenglwidget.cpp \
     vrcparser.cpp \
@@ -48,7 +47,6 @@ HEADERS += \
     vrccontroller.h \
     vrcface.h \
     vrchistory.h \
-    vrcmeshface.h \
     vrcmodel.h \
     vrcopenglwidget.h \
     vrcparser.h \

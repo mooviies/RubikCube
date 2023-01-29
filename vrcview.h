@@ -11,7 +11,7 @@
 #include <cmath>
 
 #include "meshopengl.h"
-#include "vrcmeshface.h"
+#include "vrcface.h"
 
 class VRCModel;
 
@@ -37,8 +37,9 @@ private:
     static float getWidth(float size) { return 1.6f * log(size) - 0.7f; }
     uint getID(uint i, uint j, uint k) const { return j + k * _size + i * _size * _size; }
     void completeRotation();
-    void setColor(int offset, VRCMeshCube::Color color);
-    void setColor(VRCFace::Side side, int i, int j, VRCMeshCube::Color color);
+    void setColor(int offset, VRCFace::Color color);
+    void setColor(VRCFace::Side side, int i, int j, VRCFace::Color color);
+    std::array<Vertex, 4> getFaceVertices(VRCFace::Side side, QVector3D position, float cellWidth);
 
 private:
     const static float BORDER_WIDTH;
@@ -54,27 +55,23 @@ private:
     int _maxLayer;
     int _sizeOfVertices;
 
-    QMap<VRCFace::Side, VRCMeshCube::Color> _colorBySide;
+    QMap<VRCFace::Side, VRCFace::Color> _colorBySide;
 
     QOpenGLShaderProgram *_cubeShaderProgram;
     QOpenGLShaderProgram *_stripeShaderProgram;
-    QOpenGLShaderProgram *_debugShaderProgram;
 
     MeshOpenGL *_cubeModel;
     MeshOpenGL *_equatorFillModel;
     MeshOpenGL *_middleFillModel;
     MeshOpenGL *_standingFillModel;
-    MeshOpenGL *_debugModel;
 
     float _currentRotation;
     float _targetRotation;
 
     QVector3D _rotationVector;
     QMatrix4x4 _layerRotation;
-    QMap<int, VRCMeshCube::Color> _rotating;
+    QMap<int, VRCFace::Color> _rotating;
     QMatrix4x4 _stripTranslation;
-
-    QMatrix4x4 _debugCubeTranslation;
 };
 
 #endif // VRCVIEW_H

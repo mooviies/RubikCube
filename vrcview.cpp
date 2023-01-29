@@ -8,11 +8,10 @@
 
 #include "vertex.h"
 #include "constants.h"
-#include "vrcmeshface.h"
 #include "vrcmodel.h"
 
 typedef VRCFace::Side Side;
-typedef VRCMeshCube::Color Color;
+typedef VRCFace::Color Color;
 
 const float VRCView::BORDER_WIDTH = 0.015f;
 
@@ -43,13 +42,8 @@ void VRCView::init(const QMatrix4x4 &camera, const QMatrix4x4 &projection)
     _stripeShaderProgram->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/border.vert");
     _stripeShaderProgram->addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/border.frag");
 
-    _debugShaderProgram = new QOpenGLShaderProgram();
-    _debugShaderProgram->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/debug.vert");
-    _debugShaderProgram->addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/debug.frag");
-
     _cubeShaderProgram->link();
     _stripeShaderProgram->link();
-    _debugShaderProgram->link();
 
     create(camera, projection);
 }
@@ -155,13 +149,9 @@ void VRCView::create(const QMatrix4x4 &camera, const QMatrix4x4 &projection)
     float halfWidth = _width / 2.0;
     float widthLess = halfWidth - halfCellWidth;
 
-    VRCMeshCube meshCube;
-    meshCube.setSize(_cellWidth);
-
-    /*for(auto i = (uchar)Side::Left; i <= (uchar)Side::Down; i++)
+    for(auto i = (uchar)Side::Left; i <= (uchar)Side::Down; i++)
     {
         Side side = (Side)i;
-        meshCube.setColor(side, _colorBySide[side]);
 
         float x, y, z;
         float xi = 0, yi = 0, zi = 0;
@@ -215,28 +205,22 @@ void VRCView::create(const QMatrix4x4 &camera, const QMatrix4x4 &projection)
         {
             for(uint k = 0; k < _size; k++)
             {
+                QVector3D position;
                 if(xi == 0)
-                    meshCube.setPosition(QVector3D(x, y + yi * k, z + zi * j));
+                    position = QVector3D(x, y + yi * k, z + zi * j);
                 else if(yi == 0)
-                    meshCube.setPosition(QVector3D(x + xi * j, y, z + zi * k));
-                else if(zi == 0)
-                    meshCube.setPosition(QVector3D(x + xi * j, y + yi * k, z));
+                    position = QVector3D(x + xi * j, y, z + zi * k);
+                else
+                    position = QVector3D(x + xi * j, y + yi * k, z);
 
-                auto id = getID(i, j, k);
-                meshCube.setID(id);
-                meshCube.generate();
-
-                const Vertex* faceVertices = meshCube.vertices(side);
+                auto faceVertices = getFaceVertices(side, position, _cellWidth);
                 for(int m = 0; m < SQUARE_VERTICES_COUNT; m++)
                 {
-                    vertices[m + id * SQUARE_VERTICES_COUNT] = faceVertices[m];
+                    vertices[m + getID(i, j, k) * SQUARE_VERTICES_COUNT] = faceVertices[m];
                 }
             }
         }
-    }*/
-
-    meshCube.setID(0);
-    meshCube.generate();
+    }
 
     _cubeModel = new MeshOpenGL(_cubeShaderProgram, vertices, _sizeOfVertices / sizeof(Vertex), QOpenGLBuffer::DynamicDraw);
     _cubeModel->addUniform("projection", &projection);
@@ -298,18 +282,6 @@ void VRCView::create(const QMatrix4x4 &camera, const QMatrix4x4 &projection)
     _standingFillModel->addUniform("camera", &camera);
     _standingFillModel->addUniform("rotation", &_layerRotation);
     _standingFillModel->addUniform("translation", &_stripTranslation);
-
-    Vertex debugVertices[CUBE_VERTICES_COUNT];
-    meshCube.setPosition(QVector3D(0, 0, 0));
-    meshCube.setSize(_width / 10.0);
-    meshCube.generate();
-    for(int i = 0; i < CUBE_VERTICES_COUNT; i++)
-        debugVertices[i] = meshCube.vertices()[i];
-
-    _debugModel  = new MeshOpenGL(_debugShaderProgram, debugVertices, CUBE_VERTICES_COUNT, QOpenGLBuffer::StaticDraw);
-    _debugModel->addUniform("projection", &projection);
-    _debugModel->addUniform("camera", &camera);
-    _debugModel->addUniform("translation", &_debugCubeTranslation);
 }
 
 void VRCView::completeRotation()
@@ -324,7 +296,7 @@ void VRCView::completeRotation()
     _rotating.clear();
 }
 
-void VRCView::setColor(int offset, Color color)
+void VRCView::setColor(int offset, VRCFace::Color color)
 {
     QColor c((uint)color);
     QVector3D cv(c.redF(), c.greenF(), c.blueF());
@@ -341,7 +313,7 @@ void VRCView::setColor(int offset, Color color)
     }
 }
 
-void VRCView::setColor(Side side, int i, int j, Color color)
+void VRCView::setColor(Side side, int i, int j, VRCFace::Color color)
 {
     int baseOffset = Vertex::stride() * getID((int)side, i, j) * SQUARE_VERTICES_COUNT;
 
@@ -361,4 +333,53 @@ void VRCView::setColor(Side side, int i, int j, Color color)
         _cubeModel->write(baseOffset + Vertex::rotatingOffset(), &tb, sizeOfInt);
         baseOffset += Vertex::stride();
     }
+}
+
+std::array<Vertex, 4> VRCView::getFaceVertices(VRCFace::Side side, QVector3D position, float cellWidth)
+{
+    float hsize = cellWidth / 2.0;
+    std::array<Vertex, 4> vertices;
+    uint color = (uint)_colorBySide[side];
+
+    switch(side)
+    {
+        case VRCFace::Side::Left:
+            vertices[0] = Vertex(QVector3D(-hsize,  -hsize, -hsize) + position, QVector2D(0, 0), color);
+            vertices[1] = Vertex(QVector3D(-hsize,  -hsize, hsize) + position, QVector2D(1, 0), color);
+            vertices[2] = Vertex(QVector3D(-hsize,  hsize, hsize) + position, QVector2D(1, 1), color);
+            vertices[3] = Vertex(QVector3D(-hsize,  hsize, -hsize) + position, QVector2D(0, 1), color);
+            break;
+        case VRCFace::Side::Front:
+            vertices[0] = Vertex(QVector3D(-hsize,  -hsize, hsize) + position, QVector2D(0, 0), color);
+            vertices[1] = Vertex(QVector3D(hsize,  -hsize, hsize) + position, QVector2D(1, 0), color);
+            vertices[2] = Vertex(QVector3D(hsize,  hsize, hsize) + position, QVector2D(1, 1), color);
+            vertices[3] = Vertex(QVector3D(-hsize,  hsize, hsize) + position, QVector2D(0, 1), color);
+            break;
+        case VRCFace::Side::Right:
+            vertices[0] = Vertex(QVector3D(hsize,  -hsize, hsize) + position, QVector2D(0, 0), color);
+            vertices[1] = Vertex(QVector3D(hsize,  -hsize, -hsize) + position, QVector2D(1, 0), color);
+            vertices[2] = Vertex(QVector3D(hsize,  hsize, -hsize) + position, QVector2D(1, 1), color);
+            vertices[3] = Vertex(QVector3D(hsize,  hsize, hsize) + position, QVector2D(0, 1), color);
+            break;
+        case VRCFace::Side::Back:
+            vertices[0] = Vertex(QVector3D(hsize,  -hsize, -hsize) + position, QVector2D(0, 0), color);
+            vertices[1] = Vertex(QVector3D(-hsize,  -hsize, -hsize) + position, QVector2D(1, 0), color);
+            vertices[2] = Vertex(QVector3D(-hsize,  hsize, -hsize) + position, QVector2D(1, 1), color);
+            vertices[3] = Vertex(QVector3D(hsize,  hsize, -hsize) + position, QVector2D(0, 1), color);
+            break;
+        case VRCFace::Side::Up:
+            vertices[0] = Vertex(QVector3D(-hsize,  hsize, hsize) + position, QVector2D(0, 0), color);
+            vertices[1] = Vertex(QVector3D(hsize,  hsize, hsize) + position, QVector2D(1, 0), color);
+            vertices[2] = Vertex(QVector3D(hsize,  hsize, -hsize) + position, QVector2D(1, 1), color);
+            vertices[3] = Vertex(QVector3D(-hsize,  hsize, -hsize) + position, QVector2D(0, 1), color);
+            break;
+        case VRCFace::Side::Down:
+            vertices[0] = Vertex(QVector3D(-hsize,  -hsize, -hsize) + position, QVector2D(0, 0), color);
+            vertices[1] = Vertex(QVector3D(hsize,  -hsize, -hsize) + position, QVector2D(1, 0), color);
+            vertices[2] = Vertex(QVector3D(hsize,  -hsize, hsize) + position, QVector2D(1, 1), color);
+            vertices[3] = Vertex(QVector3D(-hsize,  -hsize, hsize) + position, QVector2D(0, 1), color);
+            break;
+    }
+
+    return vertices;
 }

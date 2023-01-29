@@ -18,6 +18,18 @@ public:
         Down   = 5
     };
 
+    enum class Color
+    {
+        Green  = 0x53D151,
+        Red    = 0xDB2617,
+        Yellow = 0xF2F70C,
+        White  = 0xFFFFFF,
+        Blue   = 0x026CDB,
+        Orange = 0xFF8E07,
+        Black  = 0x000000,
+        Error  = 0xFF0DFF
+    };
+
 private:
     struct Iterator {
         using iterator_category = std::forward_iterator_tag;
