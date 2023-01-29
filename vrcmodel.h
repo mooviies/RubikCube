@@ -14,6 +14,9 @@ public:
     const VRCFace getFace(VRCFace::Side side) const { return *_cube[(uint)side]; }
     uint getSize() const { return _size; }
 
+    QList<VRCFace*>::ConstIterator begin() const { return _cube.constBegin(); }
+    QList<VRCFace*>::ConstIterator end() const { return _cube.constEnd(); }
+
     void setView(VRCView *view);
     bool execute(VRCAction action);
 

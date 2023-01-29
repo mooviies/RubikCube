@@ -32,6 +32,11 @@
 
 #include "constants.h"
 
+typedef VRCAction::Rotation Rotation;
+typedef VRCAction::Layer Layer;
+typedef VRCAction::LayerMask LayerMask;
+typedef VRCAction::Option Option;
+
 using namespace acss;
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -138,9 +143,9 @@ void MainWindow::setModel(VRCModel *model)
 
     if(_view == nullptr)
     {
-        _view = new VRCView();
-        _view->update(*_model);
+        _view = new VRCView(*_model);
         ui->openGLWidget->setView(_view);
+        _model->setView(_view);
     }
     else
         _view->update(*model);
@@ -559,122 +564,77 @@ void MainWindow::solve()
 
 }
 
-void MainWindow::rotateWithControls(int flags)
+void MainWindow::rotateWithControls(Rotation rotation)
 {
-    /*QString expr;
+    Layer layer = Layer::Front;
     if(ui->control_B->isChecked())
     {
-        flags |= RotationComponent::Back;
-        expr = QChar::fromLatin1(LayerMain::L_Back);
+        layer = Layer::Back;
     }
     else if(ui->control_F->isChecked())
     {
-        flags |= RotationComponent::Front;
-        expr = QChar::fromLatin1(LayerMain::L_Front);
+        layer = Layer::Front;
     }
     else if(ui->control_D->isChecked())
     {
-        flags |= RotationComponent::Down;
-        expr = QChar::fromLatin1(LayerMain::L_Down);
+        layer = Layer::Down;
     }
     else if(ui->control_U->isChecked())
     {
-        flags |= RotationComponent::Up;
-        expr = QChar::fromLatin1(LayerMain::L_Up);
+        layer = Layer::Up;
     }
     else if(ui->control_L->isChecked())
     {
-        flags |= RotationComponent::Left;
-        expr = QChar::fromLatin1(LayerMain::L_Left);
+        layer = Layer::Left;
     }
     else if(ui->control_R->isChecked())
     {
-        flags |= RotationComponent::Right;
-        expr = QChar::fromLatin1(LayerMain::L_Right);
+        layer = Layer::Right;
     }
     else if(ui->control_E->isChecked())
     {
-        flags |= RotationComponent::Equator;
-        expr = QChar::fromLatin1(LayerMain::L_Equator);
+        layer = Layer::Equator;
     }
     else if(ui->control_M->isChecked())
     {
-        flags |= RotationComponent::Middle;
-        expr = QChar::fromLatin1(LayerMain::L_Middle);
+        layer = Layer::Middle;
     }
     else if(ui->control_S->isChecked())
     {
-        flags |= RotationComponent::Standing;
-        expr = QChar::fromLatin1(LayerMain::L_Standing);
+        layer = Layer::Standing;
     }
     else if(ui->control_x->isChecked())
     {
-        flags |= RotationComponent::CubeX;
-        expr = QChar::fromLatin1(LayerMain::L_CubeX);
+        layer = Layer::CubeX;
     }
     else if(ui->control_y->isChecked())
     {
-        flags |= RotationComponent::CubeY;
-        expr = QChar::fromLatin1(LayerMain::L_CubeY);
+        layer = Layer::CubeY;
     }
     else if(ui->control_z->isChecked())
     {
-        flags |= RotationComponent::CubeZ;
-        expr = QChar::fromLatin1(LayerMain::L_CubeZ);
+        layer = Layer::CubeZ;
     }
 
-    int nbLayer = ui->control_nbLayer->value();
-    flags |= nbLayer << LAYER_MASK_SHIFT;
+    ushort layerNumber = ui->control_nbLayer->value();
+    auto option = ui->control_w->isChecked() ? Option::Wide : Option::None;
 
-    if(ui->control_w->isChecked())
-    {
-        flags |= RotationComponent::Wide;
-        if(!(flags & (RotationComponent::CenterLayers | RotationComponent::WholeCube)))
-        {
-            if(nbLayer == 2)
-                expr.append(expr.toLower());
-            else if(nbLayer > 2)
-            {
-                expr.insert(0, QVariant(nbLayer).toString());
-                expr.append(SYMBOL_WIDE);
-            }
-        }
-    }
-    else
-    {
-        if(!(flags & RotationComponent::CenterLayers))
-        {
-            if(nbLayer > 2)
-            {
-                expr.insert(0, QVariant(nbLayer).toString());
-            }
-            else if(nbLayer == 2)
-                expr = expr.toLower();
-        }
-    }
-
-    if((flags & RotationComponent::Turn180) == RotationComponent::Turn180)
-        expr.append(SYMBOL_180);
-    else if(flags & RotationComponent::CounterClockwise)
-        expr.append(SYMBOL_COUNTER_CLOCKWISE);
-
-    if(rotate(flags))
-        ui->textEditHistory->append(expr);*/
+    _controller->execute(VRCAction(layer, option, rotation, layerNumber));
 }
 
 void MainWindow::rotateClockwise()
 {
-    //rotateWithControls(RotationComponent::Clockwise);
+    rotateWithControls(Rotation::Clockwise);
 }
 
 void MainWindow::rotateCounterClockwise()
 {
-    //rotateWithControls(RotationComponent::CounterClockwise);
+    rotateWithControls(Rotation::CounterClockwise);
 }
 
 void MainWindow::rotateTurn180()
 {
-    //rotateWithControls(RotationComponent::Turn180);
+    rotateWithControls(Rotation::Turn180);
 }
 
 void MainWindow::uncheckLayerControls(QPushButton* exception)

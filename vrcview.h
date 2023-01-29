@@ -18,7 +18,7 @@ class VRCModel;
 class VRCView
 {
 public:
-    VRCView();
+    VRCView(const VRCModel& model);
 
     uint getSize() const { return _size; }
 
@@ -37,9 +37,9 @@ private:
     static float getWidth(float size) { return 1.6f * log(size) - 0.7f; }
     uint getID(uint i, uint j, uint k) const { return j + k * _size + i * _size * _size; }
     void completeRotation();
-    void setColor(int offset, VRCFace::Color color);
-    void setColor(VRCFace::Side side, int i, int j, VRCFace::Color color);
-    std::array<Vertex, 4> getFaceVertices(VRCFace::Side side, QVector3D position, float cellWidth);
+    void setSide(int offset, VRCFace::Side side);
+    void setSide(VRCFace::Side face, int i, int j, VRCFace::Side side);
+    std::array<Vertex, 4> getFaceVertices(VRCFace::Side side, uint color, QVector3D position, float cellWidth);
 
 private:
     const static float BORDER_WIDTH;

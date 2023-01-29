@@ -141,11 +141,11 @@ bool VRCModel::applyRotation(VRCAction::Layer layer, VRCAction::Option option, V
                 auto lastCol = _size - i + 1;
                 auto lastRow = lastCol;
                 VRCFace::rotate(
-                    getFace(Side::Left).rbeginCol(lastCol),
-                    getFace(Side::Left).rendCol(lastCol),
-                    getFace(Side::Up).beginRow(lastRow),
+                    getFace(Side::Up).beginRow(i),
+                    getFace(Side::Up).endRow(i),
                     getFace(Side::Right).beginCol(i),
-                    getFace(Side::Down).rbeginRow(i),
+                    getFace(Side::Down).rbeginRow(lastRow),
+                    getFace(Side::Left).rbeginCol(lastCol),
                     rotation);
             }
             break;
@@ -176,11 +176,11 @@ bool VRCModel::applyRotation(VRCAction::Layer layer, VRCAction::Option option, V
                 auto lastCol = _size - i + 1;
                 auto lastRow = lastCol;
                 VRCFace::rotate(
+                    getFace(Side::Up).beginRow(lastRow),
+                    getFace(Side::Up).endRow(lastRow),
                     getFace(Side::Left).rbeginCol(i),
-                    getFace(Side::Left).rendCol(i),
-                    getFace(Side::Down).rbeginRow(lastRow),
+                    getFace(Side::Down).rbeginRow(i),
                     getFace(Side::Right).beginCol(lastCol),
-                    getFace(Side::Up).beginRow(i),
                     rotation);
             }
             break;
@@ -192,12 +192,13 @@ bool VRCModel::applyRotation(VRCAction::Layer layer, VRCAction::Option option, V
 
             for(auto i = startLayer; i <= layerNumber; i++)
             {
+                auto lastRow = _size - i + 1;
                 VRCFace::rotate(
-                    getFace(Side::Front).beginRow(i),
-                    getFace(Side::Front).endRow(i),
-                    getFace(Side::Left).beginRow(i),
-                    getFace(Side::Back).beginRow(i),
-                    getFace(Side::Right).beginRow(i),
+                    getFace(Side::Front).beginRow(lastRow),
+                    getFace(Side::Front).endRow(lastRow),
+                    getFace(Side::Left).beginRow(lastRow),
+                    getFace(Side::Back).beginRow(lastRow),
+                    getFace(Side::Right).beginRow(lastRow),
                     rotation);
             }
             break;
@@ -209,13 +210,12 @@ bool VRCModel::applyRotation(VRCAction::Layer layer, VRCAction::Option option, V
 
             for(auto i = startLayer; i <= layerNumber; i++)
             {
-                auto lastRow = _size - i + 1;
                 VRCFace::rotate(
-                    getFace(Side::Front).beginRow(lastRow),
-                    getFace(Side::Front).endRow(lastRow),
-                    getFace(Side::Right).beginRow(lastRow),
-                    getFace(Side::Back).beginRow(lastRow),
-                    getFace(Side::Left).beginRow(lastRow),
+                    getFace(Side::Front).beginRow(i),
+                    getFace(Side::Front).endRow(i),
+                    getFace(Side::Right).beginRow(i),
+                    getFace(Side::Back).beginRow(i),
+                    getFace(Side::Left).beginRow(i),
                     rotation);
             }
             break;

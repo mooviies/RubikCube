@@ -77,7 +77,7 @@ private slots:
     void scramble();
     void solve();
 
-    void rotateWithControls(int flags);
+    void rotateWithControls(VRCAction::Rotation rotation);
     void rotateClockwise();
     void rotateCounterClockwise();
     void rotateTurn180();

@@ -15,8 +15,9 @@ typedef VRCFace::Color Color;
 
 const float VRCView::BORDER_WIDTH = 0.015f;
 
-VRCView::VRCView()
+VRCView::VRCView(const VRCModel &model)
 {
+    _size = model.getSize();
     _cubeShaderProgram = nullptr;
     _colorBySide.insert(Side::Left, Color::Orange);
     _colorBySide.insert(Side::Front, Color::Green);
@@ -51,6 +52,18 @@ void VRCView::init(const QMatrix4x4 &camera, const QMatrix4x4 &projection)
 void VRCView::update(const VRCModel& model)
 {
     _size = model.getSize();
+    _cubeModel->bindBuffer();
+    for(auto face : model)
+    {
+        for(uint r = 0; r < _size; r++)
+        {
+            for(uint c = 0; c < _size; c++)
+            {
+                setSide(face->getInitialSide(), r, c, face->getSide(r + 1, c + 1));
+            }
+        }
+    }
+    _cubeModel->releaseBuffer();
 }
 
 void VRCView::draw()
@@ -201,22 +214,22 @@ void VRCView::create(const QMatrix4x4 &camera, const QMatrix4x4 &projection)
             break;
         }
 
-        for(uint j = 0; j < _size; j++)
+        for(uint col = 0; col < _size; col++)
         {
-            for(uint k = 0; k < _size; k++)
+            for(uint row = 0; row < _size; row++)
             {
                 QVector3D position;
                 if(xi == 0)
-                    position = QVector3D(x, y + yi * k, z + zi * j);
+                    position = QVector3D(x, y + yi * row, z + zi * col);
                 else if(yi == 0)
-                    position = QVector3D(x + xi * j, y, z + zi * k);
+                    position = QVector3D(x + xi * col, y, z + zi * row);
                 else
-                    position = QVector3D(x + xi * j, y + yi * k, z);
+                    position = QVector3D(x + xi * col, y + yi * row, z);
 
-                auto faceVertices = getFaceVertices(side, position, _cellWidth);
+                auto faceVertices = getFaceVertices(side, (uint)_colorBySide[side], position, _cellWidth);
                 for(int m = 0; m < SQUARE_VERTICES_COUNT; m++)
                 {
-                    vertices[m + getID(i, j, k) * SQUARE_VERTICES_COUNT] = faceVertices[m];
+                    vertices[m + getID(i, row, col) * SQUARE_VERTICES_COUNT] = faceVertices[m];
                 }
             }
         }
@@ -286,19 +299,19 @@ void VRCView::create(const QMatrix4x4 &camera, const QMatrix4x4 &projection)
 
 void VRCView::completeRotation()
 {
-    _cubeModel->bindBuffer();
+    /*_cubeModel->bindBuffer();
     foreach(int key, _rotating.keys())
     {
-        setColor(key, _rotating[key]);
+        setSide(key, _rotating[key]);
     }
     _cubeModel->releaseBuffer();
     _isAnimating = false;
-    _rotating.clear();
+    _rotating.clear();*/
 }
 
-void VRCView::setColor(int offset, VRCFace::Color color)
+void VRCView::setSide(int offset, VRCFace::Side side)
 {
-    QColor c((uint)color);
+    QColor c((uint)_colorBySide[side]);
     QVector3D cv(c.redF(), c.greenF(), c.blueF());
     int tb = 0;
 
@@ -313,9 +326,12 @@ void VRCView::setColor(int offset, VRCFace::Color color)
     }
 }
 
-void VRCView::setColor(Side side, int i, int j, VRCFace::Color color)
+void VRCView::setSide(Side face, int i, int j, VRCFace::Side side)
 {
-    int baseOffset = Vertex::stride() * getID((int)side, i, j) * SQUARE_VERTICES_COUNT;
+    int baseOffset = Vertex::stride() * getID((int)face, i, j) * SQUARE_VERTICES_COUNT;
+    setSide(baseOffset, side);
+
+    /*int baseOffset = Vertex::stride() * getID((int)side, i, j) * SQUARE_VERTICES_COUNT;
 
     if(_fastMode)
     {
@@ -332,14 +348,13 @@ void VRCView::setColor(Side side, int i, int j, VRCFace::Color color)
     {
         _cubeModel->write(baseOffset + Vertex::rotatingOffset(), &tb, sizeOfInt);
         baseOffset += Vertex::stride();
-    }
+    }*/
 }
 
-std::array<Vertex, 4> VRCView::getFaceVertices(VRCFace::Side side, QVector3D position, float cellWidth)
+std::array<Vertex, 4> VRCView::getFaceVertices(VRCFace::Side side, uint color, QVector3D position, float cellWidth)
 {
     float hsize = cellWidth / 2.0;
     std::array<Vertex, 4> vertices;
-    uint color = (uint)_colorBySide[side];
 
     switch(side)
     {

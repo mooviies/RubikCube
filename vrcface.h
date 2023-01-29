@@ -78,7 +78,10 @@ public:
 
     VRCFace(uint size, Side side);
     ~VRCFace() { delete[] _pieces; }
+
     uint getSize() const { return _size; }
+
+    Side getInitialSide() const { return _initialSide; }
     Side getSide(uint row, uint col) const { return _pieces[getPosition(row - 1, col - 1)]; }
 
     RowIterator beginRow(uint row) { return RowIterator(&_pieces[getPosition(row - 1, 0)], _size); }
@@ -103,6 +106,7 @@ private:
     uint getPosition(uint row, uint col, VRCAction::Rotation rotation) const;
 
 private:
+    Side _initialSide;
     uint _size;
     uint _arraySize;
     Side* _pieces;
@@ -114,19 +118,27 @@ void VRCFace::rotate(ForwardIt1 it1, ForwardIt1 it1End, ForwardIt2 it2, ForwardI
     for(; it1 != it1End; ++it1,++it2,++it3,++it4)
     {
         auto buffer = *it4;
-        if(rotation == VRCAction::Rotation::Turn180)
+        switch(rotation)
         {
-            *it4 = *it2;
-            *it3 = *it1;
-            *it2 = buffer;
-            *it1 = *it3;
-        }
-        else
-        {
-            *it4 = *it3;
-            *it3 = *it2;
-            *it2 = *it1;
-            *it1 = buffer;
+            case VRCAction::Rotation::Clockwise:
+                *it4 = *it3;
+                *it3 = *it2;
+                *it2 = *it1;
+                *it1 = buffer;
+                break;
+            case VRCAction::Rotation::CounterClockwise:
+                *it4 = *it1;
+                *it1 = *it2;
+                *it2 = *it3;
+                *it3 = buffer;
+                break;
+            case VRCAction::Rotation::Turn180:
+                *it4 = *it2;
+                *it2 = buffer;
+                buffer = *it1;
+                *it1 = *it3;
+                *it3 = buffer;
+                break;
         }
     }
 }

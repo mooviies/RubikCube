@@ -1,7 +1,9 @@
 #include "vrcface.h"
 
-VRCFace::VRCFace(uint size, Side side) : _size(size)
+VRCFace::VRCFace(uint size, Side side)
 {
+    _initialSide = side;
+    _size = size;
     _arraySize = _size * _size;
     _pieces = new Side[_arraySize];
     for(uint i = 0; i < _arraySize; i++)
