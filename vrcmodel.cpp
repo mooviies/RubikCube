@@ -142,9 +142,9 @@ bool VRCModel::applyRotation(VRCAction::Layer layer, VRCAction::Option option, V
                 VRCFace::rotate(
                     getFace(Side::Up).beginRow(i),
                     getFace(Side::Up).endRow(i),
-                    getFace(Side::Right).beginCol(i),
+                    getFace(Side::Right).rbeginCol(i),
                     getFace(Side::Down).rbeginRow(lastRow),
-                    getFace(Side::Left).rbeginCol(lastCol),
+                    getFace(Side::Left).beginCol(lastCol),
                     rotation);
             }
             break;
@@ -177,9 +177,9 @@ bool VRCModel::applyRotation(VRCAction::Layer layer, VRCAction::Option option, V
                 VRCFace::rotate(
                     getFace(Side::Up).beginRow(lastRow),
                     getFace(Side::Up).endRow(lastRow),
-                    getFace(Side::Left).rbeginCol(i),
+                    getFace(Side::Left).beginCol(i),
                     getFace(Side::Down).rbeginRow(i),
-                    getFace(Side::Right).beginCol(lastCol),
+                    getFace(Side::Right).rbeginCol(lastCol),
                     rotation);
             }
             break;
