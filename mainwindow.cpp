@@ -567,18 +567,6 @@ void MainWindow::updateStatusBar()
     if(_isSolving) {
         solve();
     }
-
-    /*ui->textEditHistory->append(QVariant(_model->getCost()).toString() + "\n");
-
-    _scrambleCount++;
-    QString scrambleCount("Scrambles: ");
-    cost.append(QVariant(_scrambleCount).toString());
-
-    if(_scrambleCount < 200)
-    {
-        scramble();
-        execute();
-    }*/
 }
 
 void MainWindow::initControls()

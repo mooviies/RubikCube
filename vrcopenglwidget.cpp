@@ -24,7 +24,7 @@ VRCOpenGLWidget::~VRCOpenGLWidget()
 void VRCOpenGLWidget::reset()
 {
     _camera.setToIdentity();
-    _camera.lookAt(QVector3D(0, 0, 1).normalized() * _view->getSize(), QVector3D(), QVector3D(0, 1, 0));
+    _camera.lookAt(QVector3D(0, 0, 1).normalized() * log(_view->getSize()) * 3, QVector3D(), QVector3D(0, 1, 0));
     _world.setToIdentity();
     _world.rotate(-38, 0, 1, 0);
     _camera.rotate(22.5, 1, 0, 0);
@@ -149,6 +149,13 @@ void VRCOpenGLWidget::mouseReleaseEvent(QMouseEvent *event)
 {
     _mouseIsPressed = false;
     //_cube->mouseReleaseEvent(event, _projection, _camera);
+}
+
+void VRCOpenGLWidget::wheelEvent(QWheelEvent *event)
+{
+    //_camera.setToIdentity();
+    //_camera.lookAt(QVector3D(0, 0, 1).normalized() * (log(_view->getSize()) * 3.0 + (event->angleDelta().y() * 0.01)), QVector3D(), QVector3D(0, 1, 0));
+    //_camera.rotate(_verticalRotation, 1, 0, 0);
 }
 
 void VRCOpenGLWidget::updateRotation(const QPoint &diff)

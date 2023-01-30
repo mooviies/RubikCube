@@ -47,6 +47,7 @@ private:
     std::array<Vertex, 4> getFaceVertices(VRCFace::Side side, uint color, QVector3D position, float cellWidth);
     VRCAction::Layer getFillLayer(VRCAction::Layer layer);
     VRCAction::Layer getRotationFace(VRCAction::Layer layer);
+    QVector3D getHitPoint(const QVector3D& n, const QVector3D& p0, const QVector3D& l0, const QVector3D& ray);
 
 private:
     const static float BORDER_WIDTH;

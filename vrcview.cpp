@@ -486,3 +486,9 @@ VRCAction::Layer VRCView::getRotationFace(VRCAction::Layer layer)
             return Layer::Front;
     }
 }
+
+QVector3D VRCView::getHitPoint(const QVector3D& normal, const QVector3D& p0, const QVector3D& origin, const QVector3D& ray)
+{
+    float t = QVector3D::dotProduct(p0 - origin, normal) / QVector3D::dotProduct(ray, normal);
+    return origin + ray * t;
+}
