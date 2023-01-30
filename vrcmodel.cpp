@@ -28,6 +28,17 @@ VRCModel::~VRCModel()
         delete face;
 }
 
+uint VRCModel::getCost()
+{
+    uint cost = 0;
+    for(auto face : _cube)
+    {
+        cost += face->getCost();
+    }
+
+    return cost;
+}
+
 void VRCModel::setView(VRCView *view)
 {
     _view = view;

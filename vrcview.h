@@ -25,7 +25,8 @@ public:
     uint getSize() const { return _size; }
 
     void init(const QMatrix4x4 &projection, const QMatrix4x4 &camera, const QMatrix4x4 &world, const QMatrix4x4 &model, QOpenGLShaderProgram* cubeShader, QOpenGLShaderProgram* stripeShader);
-    void setModel(VRCModel *model);
+    void setModel(VRCModel *model, bool fastMode = false);
+    void setFastMode(bool fastMode);
 
     bool isAnimating() const { return _isAnimating; }
 

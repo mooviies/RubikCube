@@ -15,13 +15,14 @@ void VRCController::setModelView(VRCModel *model, VRCView *view)
 
 void VRCController::execute(VRCAction action)
 {
+    if(action.isIdentity()) return;
     _actions.enqueue(action);
 }
 
 void VRCController::execute(const QList<VRCAction>& actions)
 {
     for(auto action : actions)
-        _actions.enqueue(action);
+        execute(action);
 }
 
 void VRCController::update()
@@ -31,6 +32,9 @@ void VRCController::update()
         auto action = _actions.head();
         if(_model->execute(action))
             _history.log(_actions.dequeue());
+
+        if(_actions.isEmpty())
+            emit actionQueueEmptied();
     }
 }
 

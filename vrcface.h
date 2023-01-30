@@ -33,6 +33,14 @@ public:
     class Piece
     {
     public:
+        enum class Type
+        {
+            Center,
+            Edge,
+            Corner,
+            Ring
+        };
+
         Piece() : _side(Side::Front), _modified(false) {}
         Piece(Side side) : _side(side), _modified(false) {}
         bool wasModified() { return _modified; }
@@ -95,6 +103,7 @@ public:
     VRCFace(uint size, Side side);
     ~VRCFace() { delete[] _pieces; }
 
+    uint getCost();
     uint getSize() const { return _size; }
 
     Side getInitialSide() const { return _initialSide; }
@@ -127,6 +136,7 @@ private:
     uint _size;
     uint _arraySize;
     Piece* _pieces;
+    QMap<Side, uint> _costBuffer;
 };
 
 template<class ForwardIt1, class ForwardIt2, class ForwardIt3, class ForwardIt4>

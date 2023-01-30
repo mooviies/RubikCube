@@ -95,6 +95,7 @@ private slots:
     void pushz(bool checked);
 
     void updateController();
+    void updateStatusBar();
 
 private:
     void initControls();
@@ -116,6 +117,14 @@ private:
     QDialog _about;
     QRect _sizeBeforeMaximize;
     acss::QtAdvancedStylesheet _advancedStylesheet;
+
+    uint _scrambleCount;
+    bool _isSolving;
+    double _temperature;
+    double _cooling;
+    uint _iterations;
+    uint _maxIterations;
+    double _previousCost;
 };
 
 #endif // MAINWINDOW_H

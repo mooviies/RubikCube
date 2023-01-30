@@ -1,6 +1,7 @@
 #ifndef VRCCONTROLLER_H
 #define VRCCONTROLLER_H
 
+#include <QObject>
 #include <QQueue>
 #include <QList>
 
@@ -8,8 +9,10 @@
 #include "vrchistory.h"
 #include "vrcaction.h"
 
-class VRCController
+class VRCController : public QObject
 {
+    Q_OBJECT
+
 public:
     VRCController(VRCModel *model, VRCView *view);
     void setModelView(VRCModel *model, VRCView *view);
@@ -18,6 +21,9 @@ public:
     void update();
     void undo();
     void redo();
+
+signals:
+    void actionQueueEmptied();
 
 private:
     VRCModel *_model;

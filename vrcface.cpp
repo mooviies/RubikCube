@@ -12,6 +12,20 @@ VRCFace::VRCFace(uint size, Side side)
     }
 }
 
+uint VRCFace::getCost()
+{
+    uint cost = 0;
+    for(uint row = 0; row < _size; row++)
+    {
+        for(uint col = 0; col < _size; col++)
+        {
+            if(_initialSide != _pieces[getPosition(row, col)]._side)
+                cost++;
+        }
+    }
+    return cost;
+}
+
 void VRCFace::rotate(VRCAction::Rotation rotation)
 {
     auto buffer = new Side[_arraySize];

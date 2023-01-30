@@ -93,6 +93,7 @@ MainWindow::MainWindow(QWidget *parent) :
     _layerControls.append(ui->control_y);
     _layerControls.append(ui->control_z);
 
+    _scrambleCount = 0;
     _model = nullptr;
     _view = nullptr;
     _controller = nullptr;
@@ -113,6 +114,8 @@ MainWindow::~MainWindow()
 
 void MainWindow::setModel(VRCModel *model)
 {
+    _isSolving = false;
+
     if(_model != nullptr)
         delete _model;
     _model = model;
@@ -122,13 +125,14 @@ void MainWindow::setModel(VRCModel *model)
 
     _view = new VRCView(_model);
     ui->openGLWidget->setView(_view);
-    _view->setModel(_model);
+    _view->setModel(_model, _settings.value(SETTINGS_KEY_FAST_MODE, false).toBool());
     _model->setView(_view);
 
     if(_controller == nullptr)
     {
         _controller = new VRCController(_model, _view);
         connect(_timer, SIGNAL(timeout()), this, SLOT(updateController()));
+        connect(_controller, SIGNAL(actionQueueEmptied()), this, SLOT(updateStatusBar()));
         _timer->start();
     }
     else
@@ -251,6 +255,7 @@ void MainWindow::redo()
 void MainWindow::fastmode(bool activated)
 {
     _settings.setValue(SETTINGS_KEY_FAST_MODE, activated);
+    _view->setFastMode(activated);
 }
 
 void MainWindow::about()
@@ -338,7 +343,47 @@ void MainWindow::scramble()
 
 void MainWindow::solve()
 {
+    if(!_isSolving)
+    {
+        _temperature = 3;
+        _cooling = 0.01;
+        _maxIterations = 10;
+        _iterations = 0;
+        _isSolving = true;
+        _previousCost = _model->getCost();
+        _controller->execute(VRCAction::random(_model->getSize(), true));
+    }
+    else
+    {
+        int currentCost = _model->getCost();
+        if(currentCost == 0)
+        {
+            _isSolving = false;
+            return;
+        }
 
+        int delta = currentCost - _previousCost;
+        double acceptance = delta <= 0 ? 1 : 1.0 / std::exp(delta / _temperature);
+        if(QRandomGenerator::global()->generateDouble() > acceptance)
+        {
+            _controller->undo();
+        }
+        else
+        {
+            _previousCost = _model->getCost();
+        }
+
+        _controller->execute(VRCAction::random(_model->getSize(), true));
+        _iterations++;
+
+        if(_iterations >= _maxIterations)
+        {
+            _iterations = 0;
+            _temperature -= _temperature * _cooling;
+            if(_temperature * _cooling <= 0 || _temperature <= 0.0001)
+                _isSolving = false;
+        }
+    }
 }
 
 void MainWindow::rotateWithControls(Rotation rotation)
@@ -511,6 +556,29 @@ void MainWindow::pushz(bool checked)
 void MainWindow::updateController()
 {
     _controller->update();
+}
+
+void MainWindow::updateStatusBar()
+{
+    QString cost("Cost: ");
+    cost.append(QVariant(_model->getCost()).toString());
+    this->statusBar()->showMessage(cost + " Temperature: " + QString::number(_temperature, 'g', 2));
+
+    if(_isSolving) {
+        solve();
+    }
+
+    /*ui->textEditHistory->append(QVariant(_model->getCost()).toString() + "\n");
+
+    _scrambleCount++;
+    QString scrambleCount("Scrambles: ");
+    cost.append(QVariant(_scrambleCount).toString());
+
+    if(_scrambleCount < 200)
+    {
+        scramble();
+        execute();
+    }*/
 }
 
 void MainWindow::initControls()

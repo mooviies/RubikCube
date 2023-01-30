@@ -57,12 +57,17 @@ void VRCView::init(const QMatrix4x4 &projection, const QMatrix4x4 &camera, const
     create(projection, camera, world, model);
 }
 
-void VRCView::setModel(VRCModel *model)
+void VRCView::setModel(VRCModel *model, bool fastMode)
 {
     _model = model;
     _size = _model->getSize();
-    _fastMode = false;
+    _fastMode = fastMode;
     _isAnimating = false;
+}
+
+void VRCView::setFastMode(bool fastMode)
+{
+    _fastMode = fastMode;
 }
 
 void VRCView::update(const VRCAction &lastAction)

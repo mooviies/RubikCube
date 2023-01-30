@@ -31,6 +31,7 @@ VRCAction::VRCAction(Layer layer, Option option, Rotation rotation, ushort layer
 VRCAction& VRCAction::operator=(const VRCAction &other)
 {
     _flags = other._flags;
+    _log = other._log;
     return *this;
 }
 
@@ -152,7 +153,7 @@ VRCAction VRCAction::withLayerNumber(ushort layerNumber) const
     return action;
 }
 
-VRCAction VRCAction::random(uint modelSize)
+VRCAction VRCAction::random(uint modelSize, bool simpleMoves)
 {
     auto layer = Layer::Left;
     switch(QRandomGenerator::global()->bounded(6))
@@ -177,7 +178,7 @@ VRCAction VRCAction::random(uint modelSize)
     }
 
     auto rotation = Rotation::Clockwise;
-    switch(QRandomGenerator::global()->bounded(3))
+    switch(QRandomGenerator::global()->bounded(simpleMoves ? 2 : 3))
     {
         case 1:
             rotation = Rotation::CounterClockwise;
@@ -190,7 +191,7 @@ VRCAction VRCAction::random(uint modelSize)
     }
 
     auto option = Option::None;
-    if(modelSize >= 3 && QRandomGenerator::global()->generateDouble() < 0.25)
+    if(!simpleMoves && modelSize >= 3 && QRandomGenerator::global()->generateDouble() < 0.25)
     {
         option = Option::Wide;
     }

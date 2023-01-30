@@ -90,7 +90,7 @@ public:
     VRCAction withRotation(Rotation rotation) const;
     VRCAction withLayerNumber(ushort layerNumber) const;
 
-    static VRCAction random(uint modelSize);
+    static VRCAction random(uint modelSize, bool simpleMoves = false);
 
 private:
     static uint getFlags(Layer layer, Option option, Rotation rotation, ushort layerNumber)
