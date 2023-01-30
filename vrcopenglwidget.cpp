@@ -24,16 +24,17 @@ VRCOpenGLWidget::~VRCOpenGLWidget()
 void VRCOpenGLWidget::reset()
 {
     _camera.setToIdentity();
-    _camera.lookAt(QVector3D(0.8, 0.75, 1).normalized() * _view->getSize(), QVector3D(), QVector3D(0, 1, 0));
+    _camera.lookAt(QVector3D(0, 0, 1).normalized() * _view->getSize(), QVector3D(), QVector3D(0, 1, 0));
+    _world.setToIdentity();
+    _world.rotate(-38, 0, 1, 0);
+    _camera.rotate(22.5, 1, 0, 0);
 }
 
 void VRCOpenGLWidget::setView(VRCView *view)
 {
     _view = view;
-    _world.setToIdentity();
-    _camera.setToIdentity();
     _modelView.setToIdentity();
-    _camera.lookAt(QVector3D(0.8, 0.75, 1).normalized() * _view->getSize(), QVector3D(), QVector3D(0, 1, 0));
+    reset();
     _openGLIsInitialized = false;
 }
 
@@ -161,13 +162,13 @@ void VRCOpenGLWidget::updateRotation(const QPoint &diff)
     _world.rotate(rotSpeed * scaleX, 0, 1, 0);
 
     auto vRot = rotSpeed * scaleY;
-    if(_verticalRotation + vRot > 90)
-        vRot = _verticalRotation - 90;
-    else if(_verticalRotation + vRot < -90)
-        vRot = -(_verticalRotation + 90);
+    if(_verticalRotation + vRot > 40)
+        vRot = -(_verticalRotation - 40);
+    else if(_verticalRotation + vRot < -75)
+        vRot = -(_verticalRotation + 75);
 
     _verticalRotation += vRot;
-    _camera.rotate(vRot, 1, 0, -1);
+    _camera.rotate(vRot, 1, 0, 0);
 }
 
 QVector3D VRCOpenGLWidget::getArcballVector(QPoint mouseDiff)

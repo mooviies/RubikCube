@@ -6,6 +6,8 @@
 class VRCAction
 {
 public:
+    const static uint LAYER_MASK_SHIFT;
+
     enum class Layer
     {
         Left     = 0x00000001,
@@ -64,7 +66,7 @@ public:
     VRCAction() : VRCAction(0) {}
     VRCAction(uint flags, bool log = true);
     VRCAction(Layer layer, Option option, Rotation rotation, ushort layerNumber, bool log = true);
-    VRCAction(const VRCAction &other) { _flags = other._flags; }
+    VRCAction(const VRCAction &other) { _flags = other._flags; _log = other._log; }
 
     VRCAction& operator=(const VRCAction &other);
     bool operator==(const VRCAction &other) const { return _flags == other._flags; }
@@ -80,6 +82,7 @@ public:
     // All the following operations will return the identity if executed on the identity
     // Create a new VRCAction in this case
     VRCAction reversed() const;
+    VRCAction withOppositeLayer() const;
     VRCAction with(Layer layer, Option option, Rotation rotation, ushort layerNumber);
     VRCAction withLog(bool log) const;
     VRCAction withLayer(Layer layer) const;
@@ -87,12 +90,13 @@ public:
     VRCAction withRotation(Rotation rotation) const;
     VRCAction withLayerNumber(ushort layerNumber) const;
 
+    static VRCAction random(uint modelSize);
+
 private:
     static uint getFlags(Layer layer, Option option, Rotation rotation, ushort layerNumber)
     { return (layerNumber << LAYER_MASK_SHIFT) | (((uint)layer | (uint)option | (uint)rotation) & (uint)GeneralMask::Operation); }
 
 private:
-    const static uint LAYER_MASK_SHIFT;
     uint _flags;
     bool _log;
 };

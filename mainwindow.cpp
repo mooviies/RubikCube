@@ -113,9 +113,6 @@ MainWindow::~MainWindow()
 
 void MainWindow::setModel(VRCModel *model)
 {
-    ui->textEditHistory->clear();
-    ui->control_nbLayer->setMaximum(model->getMaxLayerNumber());
-
     if(_model != nullptr)
         delete _model;
     _model = model;
@@ -138,6 +135,8 @@ void MainWindow::setModel(VRCModel *model)
     {
         _controller->setModelView(_model, _view);
     }
+
+    initControls();
 }
 
 void MainWindow::moveEvent(QMoveEvent *)
@@ -236,9 +235,7 @@ void MainWindow::load()
 
 void MainWindow::reset()
 {
-    int size = _model->getSize();
-    delete _model;
-    setModel(new VRCModel(size));
+    setModel(new VRCModel(_model->getSize()));
 }
 
 void MainWindow::undo()
@@ -297,6 +294,12 @@ void MainWindow::reverse()
 {
     auto actions = VRCParser::parse(ui->textEditActions->toPlainText());
     std::reverse(actions.begin(), actions.end());
+
+    for(auto it = actions.begin(); it != actions.end(); ++it)
+    {
+        *it = it->reversed();
+    }
+
     _controller->execute(actions);
 }
 
@@ -307,59 +310,30 @@ void MainWindow::execute()
 
 void MainWindow::scramble()
 {
-    /*ui->tabWidget->setCurrentIndex(0);
-    ui->textEditActions->clear();
-    QString expr;
-
-    QList<char> mainFaces;
-    mainFaces.append(LayerMain::L_Up);
-    mainFaces.append(LayerMain::L_Down);
-    mainFaces.append(LayerMain::L_Left);
-    mainFaces.append(LayerMain::L_Right);
-    mainFaces.append(LayerMain::L_Front);
-    mainFaces.append(LayerMain::L_Back);
-
-    QList<QString> rotations;
-    rotations.append("");
-    rotations.append(QString(SYMBOL_COUNTER_CLOCKWISE));
-    rotations.append(QString(SYMBOL_180));
-
-    char previous = ' ';
-
-    for(int i = 0; i < ui->spinBoxScrambleLength->value(); i++)
+    auto scrambleLength = ui->spinBoxScrambleLength->value();
+    QString expressions;
+    VRCAction lastAction;
+    for(auto i = 0; i < scrambleLength; i++)
     {
-        QString el;
-        char face = ' ';
-        do
+        auto randomAction = VRCAction::random(_model->getSize());
+        if(!lastAction.isIdentity())
         {
-            face = mainFaces[QRandomGenerator::global()->generate() % mainFaces.size()];
-        }while(previous == face);
-        el = face;
-        previous = face;
-
-        bool wide = QRandomGenerator::global()->generateDouble() >= 0.5;
-
-        int layerN = QRandomGenerator::global()->generate() % _cube->maxLayer() + 1;
-
-        if(layerN == 2)
-        {
-            if(wide)
-                el.append(el.toLower());
-            else
-                el = el.toLower();
-        }
-        else if(layerN > 2)
-        {
-            el.insert(0, QVariant(layerN).toString());
-            if(wide)
-                el.append(SYMBOL_WIDE);
+            if(lastAction.getLayer() == randomAction.getLayer() || lastAction.withOppositeLayer().getLayer() == randomAction.getLayer())
+            {
+                i--;
+                continue;
+            }
         }
 
-        el.append(rotations[QRandomGenerator::global()->generate() % rotations.size()]);
-        expr += el + " ";
+        lastAction = randomAction;
+        expressions.append(VRCParser::toString(randomAction));
+
+        if(i < scrambleLength - 1)
+            expressions.append(" ");
     }
 
-    ui->textEditActions->setPlainText(expr);*/
+    ui->textEditActions->setPlainText(expressions);
+    ui->tabWidget->setCurrentIndex(1);
 }
 
 void MainWindow::solve()
@@ -524,4 +498,22 @@ void MainWindow::pushz(bool checked)
 void MainWindow::updateController()
 {
     _controller->update();
+}
+
+void MainWindow::initControls()
+{
+    ui->textEditHistory->clear();
+    ui->control_nbLayer->setMaximum(_model->getMaxLayerNumber());
+    ui->control_nbLayer->setValue(1);
+    uncheckLayerControls();
+    ui->control_w->setChecked(false);
+
+    auto size = _model->getSize();
+    ui->control_w->setEnabled(size >= 3);
+    ui->control_nbLayer->setEnabled(size >= 3);
+
+    auto isOdd = size % 2 != 0;
+    ui->control_E->setEnabled(isOdd);
+    ui->control_M->setEnabled(isOdd);
+    ui->control_S->setEnabled(isOdd);
 }

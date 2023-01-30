@@ -79,7 +79,7 @@ private slots:
     void rotateCounterClockwise();
     void rotateTurn180();
 
-    void uncheckLayerControls(QPushButton* exception);
+    void uncheckLayerControls(QPushButton* exception = nullptr);
 
     void pushF(bool checked);
     void pushB(bool checked);
@@ -95,6 +95,9 @@ private slots:
     void pushz(bool checked);
 
     void updateController();
+
+private:
+    void initControls();
 
 private:
     Ui::MainWindow *ui;

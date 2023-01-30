@@ -9,6 +9,8 @@ class VRCParser
 {
 public:
     static QList<VRCAction> parse(const QString& expression);
+    static QString toString(VRCAction action);
+    static QList<QString> toString(const QList<VRCAction> &actions);
 
 private:
     enum class LayerMain
@@ -39,6 +41,9 @@ private:
 
 private:
     VRCParser();
+
+private:
+    static QRegularExpression _regularExpression;
 };
 
 #endif // VRCPARSER_H
