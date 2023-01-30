@@ -428,71 +428,84 @@ void MainWindow::pushF(bool checked)
 {
     if(!checked) return;
     uncheckLayerControls(ui->control_F);
+    updateNBLayerControls(true);
 }
 
 void MainWindow::pushB(bool checked)
 {
     if(!checked) return;
     uncheckLayerControls(ui->control_B);
+    updateNBLayerControls(true);
 }
 
 void MainWindow::pushL(bool checked)
 {
     if(!checked) return;
     uncheckLayerControls(ui->control_L);
+    updateNBLayerControls(true);
 }
 
 void MainWindow::pushR(bool checked)
 {
     if(!checked) return;
     uncheckLayerControls(ui->control_R);
+    updateNBLayerControls(true);
 }
 
 void MainWindow::pushU(bool checked)
 {
     if(!checked) return;
     uncheckLayerControls(ui->control_U);
+    updateNBLayerControls(true);
 }
 
 void MainWindow::pushD(bool checked)
 {
     if(!checked) return;
     uncheckLayerControls(ui->control_D);
+    updateNBLayerControls(true);
 }
 
 void MainWindow::pushE(bool checked)
 {
     if(!checked) return;
     uncheckLayerControls(ui->control_E);
+    updateNBLayerControls(true);
 }
 
 void MainWindow::pushM(bool checked)
 {
     if(!checked) return;
     uncheckLayerControls(ui->control_M);
+    updateNBLayerControls(true);
 }
 void MainWindow::pushS(bool checked)
 {
     if(!checked) return;
     uncheckLayerControls(ui->control_S);
+    updateNBLayerControls(true);
 }
 
 void MainWindow::pushx(bool checked)
 {
     if(!checked) return;
     uncheckLayerControls(ui->control_x);
+    updateNBLayerControls(false);
+
 }
 
 void MainWindow::pushy(bool checked)
 {
     if(!checked) return;
     uncheckLayerControls(ui->control_y);
+    updateNBLayerControls(false);
 }
 
 void MainWindow::pushz(bool checked)
 {
     if(!checked) return;
     uncheckLayerControls(ui->control_z);
+    updateNBLayerControls(false);
 }
 
 void MainWindow::updateController()
@@ -506,14 +519,24 @@ void MainWindow::initControls()
     ui->control_nbLayer->setMaximum(_model->getMaxLayerNumber());
     ui->control_nbLayer->setValue(1);
     uncheckLayerControls();
-    ui->control_w->setChecked(false);
+    updateNBLayerControls(true);
 
-    auto size = _model->getSize();
-    ui->control_w->setEnabled(size >= 3);
-    ui->control_nbLayer->setEnabled(size >= 3);
-
-    auto isOdd = size % 2 != 0;
+    auto isOdd = _model->getSize() % 2 != 0;
     ui->control_E->setEnabled(isOdd);
     ui->control_M->setEnabled(isOdd);
     ui->control_S->setEnabled(isOdd);
+}
+
+void MainWindow::updateNBLayerControls(bool enable)
+{
+    enable = enable && _model->getSize() >= 3;
+
+    if(!enable)
+    {
+        ui->control_w->setChecked(false);
+        ui->control_nbLayer->setValue(1);
+    }
+
+    ui->control_w->setEnabled(enable);
+    ui->control_nbLayer->setEnabled(enable);
 }

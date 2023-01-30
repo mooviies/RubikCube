@@ -68,7 +68,7 @@ bool VRCModel::parseLayer(VRCAction::Layer &layer, VRCAction::Option &option, us
         if(_size % 2 == 0)
             return false;
 
-        layerNumber = _size / 2;
+        layerNumber = ceil(_size / 2.0);
         switch(layer)
         {
             case Layer::Middle:
@@ -84,9 +84,9 @@ bool VRCModel::parseLayer(VRCAction::Layer &layer, VRCAction::Option &option, us
                 return false;
         }
     }
-    else if((uint)layer & (uint)LayerMask::Center)
+    else if((uint)layer & (uint)LayerMask::Cube)
     {
-        layerNumber = _size - 1;
+        layerNumber = _size;
         option = Option::Wide;
 
         switch(layer)
@@ -114,7 +114,9 @@ bool VRCModel::applyRotation(VRCAction::Layer layer, VRCAction::Option option, V
     switch(layer)
     {
         case Layer::Left:
-            getFace(Side::Left).rotate(rotation);
+            if(startLayer == 1)
+                getFace(Side::Left).rotate(rotation);
+
             if(layerNumber == _size)
                 getFace(Side::Right).rotate(rotationReversed);
 
@@ -131,7 +133,9 @@ bool VRCModel::applyRotation(VRCAction::Layer layer, VRCAction::Option option, V
             }
             break;
         case Layer::Front:
-            getFace(Side::Front).rotate(rotation);
+            if(startLayer == 1)
+                getFace(Side::Front).rotate(rotation);
+
             if(layerNumber == _size)
                 getFace(Side::Back).rotate(rotationReversed);
 
@@ -149,7 +153,9 @@ bool VRCModel::applyRotation(VRCAction::Layer layer, VRCAction::Option option, V
             }
             break;
         case Layer::Right:
-            getFace(Side::Right).rotate(rotation);
+            if(startLayer == 1)
+                getFace(Side::Right).rotate(rotation);
+
             if(layerNumber == _size)
                 getFace(Side::Left).rotate(rotationReversed);
 
@@ -166,7 +172,9 @@ bool VRCModel::applyRotation(VRCAction::Layer layer, VRCAction::Option option, V
             }
             break;
         case Layer::Back:
-            getFace(Side::Back).rotate(rotation);
+            if(startLayer == 1)
+                getFace(Side::Back).rotate(rotation);
+
             if(layerNumber == _size)
                 getFace(Side::Front).rotate(rotationReversed);
 
@@ -184,7 +192,9 @@ bool VRCModel::applyRotation(VRCAction::Layer layer, VRCAction::Option option, V
             }
             break;
         case Layer::Up:
-            getFace(Side::Up).rotate(rotation);
+            if(startLayer == 1)
+                getFace(Side::Up).rotate(rotation);
+
             if(layerNumber == _size)
                 getFace(Side::Down).rotate(rotationReversed);
 
@@ -201,7 +211,9 @@ bool VRCModel::applyRotation(VRCAction::Layer layer, VRCAction::Option option, V
             }
             break;
         case Layer::Down:
-            getFace(Side::Down).rotate(rotation);
+            if(startLayer == 1)
+                getFace(Side::Down).rotate(rotation);
+
             if(layerNumber == _size)
                 getFace(Side::Up).rotate(rotationReversed);
 

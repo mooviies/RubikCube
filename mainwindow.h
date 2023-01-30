@@ -98,6 +98,7 @@ private slots:
 
 private:
     void initControls();
+    void updateNBLayerControls(bool enable);
 
 private:
     Ui::MainWindow *ui;

@@ -468,9 +468,10 @@ VRCAction::Layer VRCView::getRotationFace(VRCAction::Layer layer)
         case VRCAction::Layer::Up:
         case VRCAction::Layer::Down:
             return layer;
+        case VRCAction::Layer::Equator:
+            return Layer::Down;
         case VRCAction::Layer::Middle:
             return Layer::Left;
-        case VRCAction::Layer::Equator:
         case VRCAction::Layer::CubeX:
             return Layer::Right;
         case VRCAction::Layer::CubeY:
