@@ -25,8 +25,9 @@ VRCView::VRCView(VRCModel *model)
     _size = _model->getSize();
     _fastMode = false;
     _isAnimating = false;
-
     _cubeShaderProgram = nullptr;
+    _stripeShaderProgram = nullptr;
+
     _colorBySide.insert(Side::Left, Color::Orange);
     _colorBySide.insert(Side::Front, Color::Green);
     _colorBySide.insert(Side::Right, Color::Red);
@@ -35,24 +36,23 @@ VRCView::VRCView(VRCModel *model)
     _colorBySide.insert(Side::Down, Color::Yellow);
 }
 
-void VRCView::init(const QMatrix4x4 &projection, const QMatrix4x4 &camera, const QMatrix4x4 &world, const QMatrix4x4 &model)
+VRCView::~VRCView()
+{
+    delete _cubeModel;
+    delete _equatorFillModel;
+    delete _middleFillModel;
+    delete _standingFillModel;
+}
+
+void VRCView::init(const QMatrix4x4 &projection, const QMatrix4x4 &camera, const QMatrix4x4 &world, const QMatrix4x4 &model, QOpenGLShaderProgram *cubeShader, QOpenGLShaderProgram *stripeShader)
 {
     _currentRotation = 0;
     _targetRotation = 0;
     _layerRotation.setToIdentity();
     _isAnimating = false;
     _sizeOfVertices = 0;
-
-    _cubeShaderProgram = new QOpenGLShaderProgram();
-    _cubeShaderProgram->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/simple.vert");
-    _cubeShaderProgram->addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/simple.frag");
-
-    _stripeShaderProgram = new QOpenGLShaderProgram();
-    _stripeShaderProgram->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/border.vert");
-    _stripeShaderProgram->addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/border.frag");
-
-    _cubeShaderProgram->link();
-    _stripeShaderProgram->link();
+    _cubeShaderProgram = cubeShader;
+    _stripeShaderProgram = stripeShader;
 
     create(projection, camera, world, model);
 }
@@ -60,6 +60,9 @@ void VRCView::init(const QMatrix4x4 &projection, const QMatrix4x4 &camera, const
 void VRCView::setModel(VRCModel *model)
 {
     _model = model;
+    _size = _model->getSize();
+    _fastMode = false;
+    _isAnimating = false;
 }
 
 void VRCView::update(const VRCAction &lastAction)
@@ -133,6 +136,8 @@ void VRCView::update(const VRCAction &lastAction)
 
 void VRCView::draw()
 {
+    if(_cubeShaderProgram == nullptr) return;
+
     if(_isAnimating)
     {
         _currentRotation += ROTATION_SPEED;

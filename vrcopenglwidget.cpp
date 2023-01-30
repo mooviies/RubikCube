@@ -10,13 +10,21 @@ VRCOpenGLWidget::VRCOpenGLWidget(QWidget *parent) : QOpenGLWidget(parent)
 {
     _mouseIsInside = false;
     _mouseIsPressed = false;
+    _openGLIsInitialized = false;
     _verticalRotation = 0;
     setMouseTracking(true);
 }
 
 VRCOpenGLWidget::~VRCOpenGLWidget()
 {
+    delete _cubeShaderProgram;
+    delete _stripeShaderProgram;
+}
 
+void VRCOpenGLWidget::reset()
+{
+    _camera.setToIdentity();
+    _camera.lookAt(QVector3D(0.8, 0.75, 1).normalized() * _view->getSize(), QVector3D(), QVector3D(0, 1, 0));
 }
 
 void VRCOpenGLWidget::setView(VRCView *view)
@@ -26,6 +34,7 @@ void VRCOpenGLWidget::setView(VRCView *view)
     _camera.setToIdentity();
     _modelView.setToIdentity();
     _camera.lookAt(QVector3D(0.8, 0.75, 1).normalized() * _view->getSize(), QVector3D(), QVector3D(0, 1, 0));
+    _openGLIsInitialized = false;
 }
 
 void VRCOpenGLWidget::initializeGL()
@@ -38,7 +47,20 @@ void VRCOpenGLWidget::initializeGL()
     glFunctions->glDepthFunc(GL_LEQUAL);
     glFunctions->glClearColor(0.23, 0.23, 0.23, 1);
 
-    _view->init(_projection, _camera, _world, _modelView);
+    _cubeShaderProgram = new QOpenGLShaderProgram();
+    _cubeShaderProgram->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/simple.vert");
+    _cubeShaderProgram->addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/simple.frag");
+
+    _stripeShaderProgram = new QOpenGLShaderProgram();
+    _stripeShaderProgram->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/border.vert");
+    _stripeShaderProgram->addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/border.frag");
+
+    _cubeShaderProgram->link();
+    _stripeShaderProgram->link();
+
+    _view->init(_projection, _camera, _world, _modelView, _cubeShaderProgram, _stripeShaderProgram);
+
+    _openGLIsInitialized = true;
 }
 
 void VRCOpenGLWidget::resizeGL(int w, int h)
@@ -50,7 +72,11 @@ void VRCOpenGLWidget::resizeGL(int w, int h)
 
 void VRCOpenGLWidget::paintGL()
 {
-    if(_view == nullptr) return;
+    if(!_openGLIsInitialized)
+    {
+        _view->init(_projection, _camera, _world, _modelView, _cubeShaderProgram, _stripeShaderProgram);
+        _openGLIsInitialized = true;
+    }
 
     QOpenGLContext::currentContext()->functions()->glClear(GL_COLOR_BUFFER_BIT);
     _view->draw();

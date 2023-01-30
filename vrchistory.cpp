@@ -2,7 +2,7 @@
 
 void VRCHistory::log(VRCAction action)
 {
-    if(action.isIdentity()) return;
+    if(action.isIdentity() || !action.log()) return;
 
     _actionsToRedo.clear();
     _actionsToUndo.push(action);
@@ -16,7 +16,7 @@ VRCAction VRCHistory::undo()
     auto action = _actionsToUndo.pop();
     _actionsToRedo.push(action);
 
-    return action;
+    return action.reversed().withLog(false);
 }
 
 VRCAction VRCHistory::redo()
@@ -27,7 +27,7 @@ VRCAction VRCHistory::redo()
     auto action = _actionsToRedo.pop();
     _actionsToUndo.push(action);
 
-    return action;
+    return action.withLog(false);
 }
 
 void VRCHistory::clear()

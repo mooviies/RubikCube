@@ -596,7 +596,7 @@
              <item>
               <widget class="QSpinBox" name="control_nbLayer">
                <property name="enabled">
-                <bool>false</bool>
+                <bool>true</bool>
                </property>
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
@@ -1025,22 +1025,5 @@
  <resources>
   <include location="resources.qrc"/>
  </resources>
- <connections>
-  <connection>
-   <sender>control_w</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>control_nbLayer</receiver>
-   <slot>setEnabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>734</x>
-     <y>316</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>705</x>
-     <y>316</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>

@@ -17,6 +17,7 @@ public:
     VRCOpenGLWidget(QWidget *parent);
     ~VRCOpenGLWidget();
 
+    void reset();
     void setView(VRCView* view);
     bool mouseIsInside() const { return _mouseIsInside; }
     QPoint mousePosition() const { return _mousePosition; }
@@ -41,6 +42,9 @@ private:
     static const float BORDER_LIMIT_DISTANCE;
 
     VRCView* _view;
+    bool _openGLIsInitialized;
+    QOpenGLShaderProgram *_cubeShaderProgram;
+    QOpenGLShaderProgram *_stripeShaderProgram;
 
     float _verticalRotation;
     QMatrix4x4 _world;

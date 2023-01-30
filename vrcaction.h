@@ -62,14 +62,15 @@ public:
     static VRCAction getIdentity() { return VRCAction(0); }
 
     VRCAction() : VRCAction(0) {}
-    VRCAction(uint flags);
-    VRCAction(Layer layer, Option option, Rotation rotation, ushort layerNumber);
+    VRCAction(uint flags, bool log = true);
+    VRCAction(Layer layer, Option option, Rotation rotation, ushort layerNumber, bool log = true);
     VRCAction(const VRCAction &other) { _flags = other._flags; }
 
     VRCAction& operator=(const VRCAction &other);
     bool operator==(const VRCAction &other) const { return _flags == other._flags; }
     bool operator!=(const VRCAction &other) const { return _flags == other._flags; }
 
+    bool log() const { return _log; }
     bool isIdentity() const { return _flags == 0; }
     Layer getLayer() const { return (Layer)(_flags & (uint)LayerMask::All); }
     Option getOption() const { return (Option)(_flags & (uint)OptionMask::All); }
@@ -80,6 +81,7 @@ public:
     // Create a new VRCAction in this case
     VRCAction reversed() const;
     VRCAction with(Layer layer, Option option, Rotation rotation, ushort layerNumber);
+    VRCAction withLog(bool log) const;
     VRCAction withLayer(Layer layer) const;
     VRCAction withOption(Option option) const;
     VRCAction withRotation(Rotation rotation) const;
@@ -92,6 +94,7 @@ private:
 private:
     const static uint LAYER_MASK_SHIFT;
     uint _flags;
+    bool _log;
 };
 
 #endif // VRCACTION_H

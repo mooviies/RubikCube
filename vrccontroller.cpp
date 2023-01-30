@@ -5,15 +5,23 @@ VRCController::VRCController(VRCModel *model, VRCView *view) : _model(model), _v
 
 }
 
-void VRCController::setModel(VRCModel *model)
+void VRCController::setModelView(VRCModel *model, VRCView *view)
 {
     _model = model;
+    _view = view;
     _history.clear();
+    _actions.clear();
 }
 
 void VRCController::execute(VRCAction action)
 {
     _actions.enqueue(action);
+}
+
+void VRCController::execute(const QList<VRCAction>& actions)
+{
+    for(auto action : actions)
+        _actions.enqueue(action);
 }
 
 void VRCController::update()
@@ -24,4 +32,14 @@ void VRCController::update()
         if(_model->execute(action))
             _history.log(_actions.dequeue());
     }
+}
+
+void VRCController::undo()
+{
+    execute(_history.undo());
+}
+
+void VRCController::redo()
+{
+    execute(_history.redo());
 }

@@ -31,10 +31,10 @@
 #include <QWindowStateChangeEvent>
 
 #include "constants.h"
+#include "vrcparser.h"
 
 typedef VRCAction::Rotation Rotation;
 typedef VRCAction::Layer Layer;
-typedef VRCAction::LayerMask LayerMask;
 typedef VRCAction::Option Option;
 
 using namespace acss;
@@ -54,8 +54,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionFastMode, SIGNAL(toggled(bool)), this, SLOT(fastmode(bool)));
     connect(ui->actionAbout, SIGNAL(triggered(bool)), this, SLOT(about()));
     connect(ui->actionResetSettings, SIGNAL(triggered(bool)), this, SLOT(resetSettings()));
-    //connect(ui->actionUndo, SIGNAL(triggered(bool)), this, SLOT(undo()));
-    //connect(ui->actionRedo, SIGNAL(triggered(bool)), this, SLOT(redo()));
+    connect(ui->actionUndo, SIGNAL(triggered(bool)), this, SLOT(undo()));
+    connect(ui->actionRedo, SIGNAL(triggered(bool)), this, SLOT(redo()));
 
     connect(ui->pushButtonNew, SIGNAL(clicked(bool)), this, SLOT(newCube()));
     connect(ui->pushButtonReset, SIGNAL(clicked(bool)), this, SLOT(reset()));
@@ -66,7 +66,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->control_clockwise, SIGNAL(clicked(bool)), this, SLOT(rotateClockwise()));
     connect(ui->control_counter, SIGNAL(clicked(bool)), this, SLOT(rotateCounterClockwise()));
     connect(ui->control_turn180, SIGNAL(clicked(bool)), this, SLOT(rotateTurn180()));
-    connect(ui->control_nbLayer, SIGNAL(valueChanged(int)), this, SLOT(nbLChanged(int)));
 
     connect(ui->control_F, SIGNAL(toggled(bool)), this, SLOT(pushF(bool)));
     connect(ui->control_B, SIGNAL(toggled(bool)), this, SLOT(pushB(bool)));
@@ -94,6 +93,7 @@ MainWindow::MainWindow(QWidget *parent) :
     _layerControls.append(ui->control_y);
     _layerControls.append(ui->control_z);
 
+    _model = nullptr;
     _view = nullptr;
     _controller = nullptr;
     _timer = new QTimer(this);
@@ -111,209 +111,33 @@ MainWindow::~MainWindow()
     delete _controller;
 }
 
-bool MainWindow::rotate(int flags)
-{
-    /*if(_cube->rotate(flags, ui->actionFastMode->isChecked()))
-    {
-        addToHistory(flags);
-        return true;
-    }*/
-    return false;
-}
-
-bool MainWindow::rotate(const QList<int>& flagsList)
-{
-    /*if(_cube->rotate(flagsList, ui->actionFastMode->isChecked()))
-    {
-        addToHistory(flagsList);
-        return true;
-    }*/
-    return false;
-}
-
 void MainWindow::setModel(VRCModel *model)
 {
-    /*_history.clear();
-    _currentCommand = -1;
     ui->textEditHistory->clear();
+    ui->control_nbLayer->setMaximum(model->getMaxLayerNumber());
 
-    _cube = cube;
-    ui->openGLWidget->setCube(_cube);
-    ui->control_nbLayer->setMaximum(_cube->maxLayer());*/
-
+    if(_model != nullptr)
+        delete _model;
     _model = model;
 
-    if(_view == nullptr)
-    {
-        _view = new VRCView(_model);
-        ui->openGLWidget->setView(_view);
-        _view->setModel(_model);
-        _model->setView(_view);
+    if(_view != nullptr)
+        delete _view;
 
-    }
-    else
-    {
-        _view->setModel(_model);
-        _model->setView(_view);
-    }
+    _view = new VRCView(_model);
+    ui->openGLWidget->setView(_view);
+    _view->setModel(_model);
+    _model->setView(_view);
 
     if(_controller == nullptr)
     {
-        _controller = new VRCController(model, _view);
+        _controller = new VRCController(_model, _view);
         connect(_timer, SIGNAL(timeout()), this, SLOT(updateController()));
         _timer->start();
     }
     else
-        _controller->setModel(model);
-}
-
-QList<int> MainWindow::getCommands(const QString& expression)
-{
-    /*QRegularExpression re("(\\d*)(F|B|R|L|U|D|x|y|z|M|E|H|S)?(f|b|r|l|u|d)?(w?)((?:2|')?)");
-    auto iter = re.globalMatch(expression);
-    QList<int> commands;
-
-    while(iter.hasNext())
     {
-        auto match = iter.next();
-        QString nbLayer = match.captured(1);
-        QString face = match.captured(2);
-        QString faceSmall = match.captured(3);
-        QString wide = match.captured(4);
-        QString turn = match.captured(5);
-
-        int flags = 0;
-        bool hasBigFace = face.size() > 0;
-        if(hasBigFace)
-        {
-            switch(face[0].toLatin1())
-            {
-            case LayerMain::L_Up:
-                flags |= RotationComponent::Up;
-                break;
-            case LayerMain::L_Down:
-                flags |= RotationComponent::Down;
-                break;
-            case LayerMain::L_Front:
-                flags |= RotationComponent::Front;
-                break;
-            case LayerMain::L_Back:
-                flags |= RotationComponent::Back;
-                break;
-            case LayerMain::L_Left:
-                flags |= RotationComponent::Left;
-                break;
-            case LayerMain::L_Right:
-                flags |= RotationComponent::Right;
-                break;
-            case LayerMain::L_Equator:
-                flags |= RotationComponent::Equator;
-                break;
-            case LayerMain::L_Middle:
-                flags |= RotationComponent::Middle;
-                break;
-            case LayerMain::L_Standing:
-                flags |= RotationComponent::Standing;
-                break;
-            case LayerMain::L_CubeX:
-                flags |= RotationComponent::CubeX;
-                break;
-            case LayerMain::L_CubeY:
-                flags |= RotationComponent::CubeY;
-                break;
-            case LayerMain::L_CubeZ:
-                flags |= RotationComponent::CubeZ;
-                break;
-            }
-        }
-
-        int currentNbLayer = 1;
-        if(faceSmall.size() > 0)
-        {
-            if(hasBigFace)
-            {
-                if(faceSmall[0].toUpper() == face[0])
-                    flags |= RotationComponent::Wide;
-            }
-            else
-            {
-                switch(faceSmall[0].toLatin1())
-                {
-                case LayerSub::Li_Up:
-                    flags |= RotationComponent::Up;
-                    break;
-                case LayerSub::Li_Down:
-                    flags |= RotationComponent::Down;
-                    break;
-                case LayerSub::Li_Front:
-                    flags |= RotationComponent::Front;
-                    break;
-                case LayerSub::Li_Back:
-                    flags |= RotationComponent::Back;
-                    break;
-                case LayerSub::Li_Left:
-                    flags |= RotationComponent::Left;
-                    break;
-                case LayerSub::Li_Right:
-                    flags |= RotationComponent::Right;
-                    break;
-                }
-            }
-            currentNbLayer = 2;
-        }
-
-        if(nbLayer.isEmpty())
-            flags += currentNbLayer;
-        else
-            flags += QVariant(nbLayer).toInt();
-
-        if(!wide.isEmpty() && wide[0] == SYMBOL_WIDE)
-        {
-            flags |= RotationComponent::Wide;
-        }
-
-        if(turn.isEmpty())
-            flags |= RotationComponent::Clockwise;
-        else if(turn[0] == SYMBOL_COUNTER_CLOCKWISE)
-            flags |= RotationComponent::CounterClockwise;
-        else
-            flags |= RotationComponent::Turn180;
-
-        commands.append(flags);
+        _controller->setModelView(_model, _view);
     }
-
-    return commands;*/
-}
-
-void MainWindow::addToHistory(int flags)
-{
-    /*if(_currentCommand < _history.size() - 1)
-    {
-        int toRemove = _history.size() - _currentCommand - 1;
-        for(int i = 0; i < toRemove; i++)
-            _history.removeLast();
-    }
-    _history.append(flags);
-    _currentCommand = _history.size() - 1;
-    ui->actionUndo->setEnabled(true);
-    ui->actionRedo->setEnabled(false);*/
-}
-
-void MainWindow::addToHistory(const QList<int>& flagsList)
-{
-    /*if(_currentCommand < _history.size() - 1)
-    {
-        int toRemove = _history.size() - _currentCommand - 1;
-        for(int i = 0; i < toRemove; i++)
-            _history.removeLast();
-    }
-
-    foreach(auto flags, flagsList)
-        _history.append(flags);
-
-    _currentCommand = _history.size() - 1;
-    ui->actionUndo->setEnabled(true);
-    ui->actionRedo->setEnabled(false);*/
 }
 
 void MainWindow::moveEvent(QMoveEvent *)
@@ -342,19 +166,18 @@ void MainWindow::changeEvent(QEvent *event)
 
 void MainWindow::newCube()
 {
-    /*bool ok = false;
-    int size = QInputDialog::getInt(this, tr("New Cube"), tr("Cube Size"), _cube->size(), 2, 100, 1, &ok);
+    bool ok = false;
+    int size = QInputDialog::getInt(this, tr("New Cube"), tr("Cube Size"), _model->getSize(), 2, 100, 1, &ok);
     if(ok)
     {
-        delete _cube;
-        setCube(new VirtualRubiksCube(ui->openGLWidget, size));
+        setModel(new VRCModel(size));
         _settings.setValue(SETTINGS_KEY_SIZE, size);
-    }*/
+    }
 }
 
 void MainWindow::save()
 {
-    /*QString filename = QFileDialog::getSaveFileName(this, tr("Save Cube"), _settings.value(SETTINGS_KEY_SAVE, QDir::currentPath()).toString(), tr("Text files (*.txt)"));
+    QString filename = QFileDialog::getSaveFileName(this, tr("Save Cube"), _settings.value(SETTINGS_KEY_SAVE, QDir::currentPath()).toString(), tr("Text files (*.txt)"));
     if(!filename.isEmpty())
     {
         QFileInfo info(filename);
@@ -368,15 +191,15 @@ void MainWindow::save()
             return;
 
         QTextStream out(&file);
-        out << "cubesize=" << QVariant(_cube->size()).toString() << "\n";
+        out << "cubesize=" << QVariant(_model->getSize()).toString() << "\n";
         out << ui->textEditHistory->toPlainText();
         file.close();
-    }*/
+    }
 }
 
 void MainWindow::load()
 {
-    /*QString filename = QFileDialog::getOpenFileName(this, tr("Open Cube"), _settings.value(SETTINGS_KEY_SAVE, QDir::currentPath()).toString(), tr("Text files (*.txt)"));
+    QString filename = QFileDialog::getOpenFileName(this, tr("Open Cube"), _settings.value(SETTINGS_KEY_SAVE, QDir::currentPath()).toString(), tr("Text files (*.txt)"));
     if(!filename.isEmpty())
     {
         QFileInfo info(filename);
@@ -395,7 +218,7 @@ void MainWindow::load()
             {
                 int size = sizeStr.remove("cubesize=").toInt();
                 if(size >= 2 && size <= 100)
-                    setCube(new VirtualRubiksCube(ui->openGLWidget, size));
+                    setModel(new VRCModel(size));
             }
             else
             {
@@ -408,52 +231,24 @@ void MainWindow::load()
             }
             file.close();
         }
-    }*/
+    }
 }
 
 void MainWindow::reset()
 {
-    /*int size = _cube->size();
-    delete _cube;
-    setCube(new VirtualRubiksCube(ui->openGLWidget, size));*/
+    int size = _model->getSize();
+    delete _model;
+    setModel(new VRCModel(size));
 }
 
 void MainWindow::undo()
 {
-    /*if(_currentCommand >= 0 && _history.size() > 0)
-    {
-        ui->actionRedo->setEnabled(true);
-        int flags = _history[_currentCommand--];
-        if(flags & RotationComponent::Clockwise)
-        {
-            flags ^= RotationComponent::Clockwise;
-            flags |= RotationComponent::CounterClockwise;
-        }
-        else if(flags & RotationComponent::CounterClockwise)
-        {
-            flags ^= RotationComponent::CounterClockwise;
-            flags |= RotationComponent::Clockwise;
-        }
-        if(!_cube->rotate(flags))
-        {
-
-        }
-    }
-    else
-        ui->actionUndo->setEnabled(false);*/
+    _controller->undo();
 }
 
 void MainWindow::redo()
 {
-    /*if(_currentCommand < _history.size() - 1)
-    {
-        ui->actionUndo->setEnabled(true);
-        _cube->rotate(_history[_currentCommand++]);
-    }
-    else
-    {
-        ui->actionRedo->setEnabled(false);
-    }*/
+    _controller->redo();
 }
 
 void MainWindow::fastmode(bool activated)
@@ -500,17 +295,14 @@ void MainWindow::loadStyle()
 
 void MainWindow::reverse()
 {
-    auto commands = getCommands(ui->textEditActions->toPlainText());
-    std::reverse(std::begin(commands), std::end(commands));
-    ui->textEditActions->clear();
+    auto actions = VRCParser::parse(ui->textEditActions->toPlainText());
+    std::reverse(actions.begin(), actions.end());
+    _controller->execute(actions);
 }
 
 void MainWindow::execute()
 {
-    auto commands = getCommands(ui->textEditActions->toPlainText());
-    rotate(commands);
-
-    ui->textEditHistory->append(ui->textEditActions->toPlainText());
+    _controller->execute(VRCParser::parse(ui->textEditActions->toPlainText()));
 }
 
 void MainWindow::scramble()
@@ -727,18 +519,6 @@ void MainWindow::pushz(bool checked)
 {
     if(!checked) return;
     uncheckLayerControls(ui->control_z);
-}
-
-void MainWindow::nbLChanged(int value)
-{
-    /*if(value == 1)
-    {
-        ui->control_w->setChecked(false);
-        foreach(auto obj, _subLayerControls)
-        {
-            obj->setChecked(false);
-        }
-    }*/
 }
 
 void MainWindow::updateController()

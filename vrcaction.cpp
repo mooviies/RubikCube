@@ -5,14 +5,16 @@
 
 const uint VRCAction::LAYER_MASK_SHIFT = countConsecutiveSetBit((uint)GeneralMask::Operation);
 
-VRCAction::VRCAction(uint flags)
+VRCAction::VRCAction(uint flags, bool log)
 {
     if(flags == 0)
     {
         _flags = 0;
+        _log = false;
         return;
     }
 
+    _log = log;
     auto layer = (Layer)(flags & (uint)LayerMask::All);
     auto option = (Option)(flags & (uint)OptionMask::All);
     auto rotation = (Rotation)(flags &(uint)RotationMask::All);
@@ -20,7 +22,7 @@ VRCAction::VRCAction(uint flags)
     _flags = (flags & (uint)GeneralMask::LayerNumber) | (((uint)layer | (uint)option | (uint)rotation) & (uint)GeneralMask::Operation);
 }
 
-VRCAction::VRCAction(Layer layer, Option option, Rotation rotation, ushort layerNumber)
+VRCAction::VRCAction(Layer layer, Option option, Rotation rotation, ushort layerNumber, bool log) : _log(log)
 {
     _flags = getFlags(layer, option, rotation, layerNumber);
 }
@@ -58,6 +60,14 @@ VRCAction VRCAction::reversed() const
 VRCAction VRCAction::with(Layer layer, Option option, Rotation rotation, ushort layerNumber)
 {
     return VRCAction(getFlags(layer, option, rotation, layerNumber));
+}
+
+VRCAction VRCAction::withLog(bool log) const
+{
+    VRCAction action(*this);
+    action._log = log;
+
+    return action;
 }
 
 VRCAction VRCAction::withLayer(Layer layer) const

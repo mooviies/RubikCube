@@ -23,32 +23,6 @@
 
 #include <QString>
 
-enum LayerMain
-{
-    L_Left       = 'L',
-    L_Front      = 'F',
-    L_Right      = 'R',
-    L_Back       = 'B',
-    L_Up         = 'U',
-    L_Down       = 'D',
-    L_Middle     = 'M',
-    L_Equator    = 'E',
-    L_Standing   = 'S',
-    L_CubeX      = 'x',
-    L_CubeY      = 'y',
-    L_CubeZ      = 'z'
-};
-
-enum LayerSub
-{
-    Li_Left  = 'l',
-    Li_Front = 'f',
-    Li_Right = 'r',
-    Li_Back  = 'b',
-    Li_Up    = 'u',
-    Li_Down  = 'd'
-};
-
 const char SYMBOL_COUNTER_CLOCKWISE = '\'';
 const char SYMBOL_180 = '2';
 const char SYMBOL_WIDE = 'w';

@@ -51,10 +51,6 @@ public:
     void setModel(VRCModel *model);
 
 protected:
-    QList<int> getCommands(const QString& expression);
-    void addToHistory(int flags);
-    void addToHistory(const QList<int>& flagsList);
-
     void moveEvent(QMoveEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
     void changeEvent(QEvent *event) override;
@@ -98,7 +94,6 @@ private slots:
     void pushy(bool checked);
     void pushz(bool checked);
 
-    void nbLChanged(int value);
     void updateController();
 
 private:
