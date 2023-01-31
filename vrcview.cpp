@@ -329,18 +329,24 @@ void VRCView::create(const QMatrix4x4 &projection, const QMatrix4x4 &camera, con
     _equatorFillModel  = new MeshOpenGL(_stripeShaderProgram, equatorVertices, sizeof(equatorVertices) / sizeof(Vertex), QOpenGLBuffer::StaticDraw);
     _equatorFillModel->addUniform("projection", &projection);
     _equatorFillModel->addUniform("camera", &camera);
+    _equatorFillModel->addUniform("world", &world);
+    _equatorFillModel->addUniform("model", &model);
     _equatorFillModel->addUniform("rotation", &_layerRotation);
     _equatorFillModel->addUniform("translation", &_stripTranslation);
 
     _middleFillModel  = new MeshOpenGL(_stripeShaderProgram, middleVertices, sizeof(middleVertices) / sizeof(Vertex), QOpenGLBuffer::StaticDraw);
     _middleFillModel->addUniform("projection", &projection);
     _middleFillModel->addUniform("camera", &camera);
+    _middleFillModel->addUniform("world", &world);
+    _middleFillModel->addUniform("model", &model);
     _middleFillModel->addUniform("rotation", &_layerRotation);
     _middleFillModel->addUniform("translation", &_stripTranslation);
 
     _standingFillModel  = new MeshOpenGL(_stripeShaderProgram, standingVertices, sizeof(standingVertices) / sizeof(Vertex), QOpenGLBuffer::StaticDraw);
     _standingFillModel->addUniform("projection", &projection);
     _standingFillModel->addUniform("camera", &camera);
+    _standingFillModel->addUniform("world", &world);
+    _standingFillModel->addUniform("model", &model);
     _standingFillModel->addUniform("rotation", &_layerRotation);
     _standingFillModel->addUniform("translation", &_stripTranslation);
 }
