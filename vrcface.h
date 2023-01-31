@@ -51,7 +51,10 @@ public:
         friend class VRCFace;
 
         Side _side;
+        Side _initialSide;
+
         bool _modified;
+        uint _initialPosition;
     };
 
 private:
@@ -103,7 +106,7 @@ public:
     VRCFace(uint size, Side side);
     ~VRCFace() { delete[] _pieces; }
 
-    uint getCost();
+    double getCost();
     uint getSize() const { return _size; }
 
     Side getInitialSide() const { return _initialSide; }

@@ -18,7 +18,7 @@ public:
     QList<VRCFace*>::ConstIterator begin() const { return _cube.constBegin(); }
     QList<VRCFace*>::ConstIterator end() const { return _cube.constEnd(); }
 
-    uint getCost();
+    double getCost();
     void setView(VRCView *view);
     bool execute(VRCAction action);
 

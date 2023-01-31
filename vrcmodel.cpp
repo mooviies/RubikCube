@@ -28,9 +28,9 @@ VRCModel::~VRCModel()
         delete face;
 }
 
-uint VRCModel::getCost()
+double VRCModel::getCost()
 {
-    uint cost = 0;
+    double cost = 0;
     for(auto face : _cube)
     {
         cost += face->getCost();

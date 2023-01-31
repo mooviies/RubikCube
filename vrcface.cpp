@@ -9,18 +9,23 @@ VRCFace::VRCFace(uint size, Side side)
     for(uint i = 0; i < _arraySize; i++)
     {
         _pieces[i]._side = side;
+        _pieces[i]._initialSide = side;
+        _pieces[i]._initialPosition = i;
     }
 }
 
-uint VRCFace::getCost()
+double VRCFace::getCost()
 {
-    uint cost = 0;
+    double cost = 0;
     for(uint row = 0; row < _size; row++)
     {
         for(uint col = 0; col < _size; col++)
         {
-            if(_initialSide != _pieces[getPosition(row, col)]._side)
-                cost++;
+            uint position = getPosition(row, col);
+            if(_pieces[position]._initialSide != _pieces[position]._side)
+                cost += 1.0;
+            else if(_pieces[position]._initialPosition != position)
+                cost += 0.5;
         }
     }
     return cost;

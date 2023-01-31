@@ -345,25 +345,26 @@ void MainWindow::solve()
 {
     if(!_isSolving)
     {
-        _temperature = 3;
+        _temperature = _model->getCost();
         _cooling = 0.01;
-        _maxIterations = 10;
         _iterations = 0;
         _isSolving = true;
         _previousCost = _model->getCost();
         _controller->execute(VRCAction::random(_model->getSize(), true));
+        _temperature = _model->getCost();
+        _maxIterations = _model->getCost();
     }
     else
     {
-        int currentCost = _model->getCost();
+        double currentCost = _model->getCost();
         if(currentCost == 0)
         {
             _isSolving = false;
             return;
         }
 
-        int delta = currentCost - _previousCost;
-        double acceptance = delta <= 0 ? 1 : 1.0 / std::exp(delta / _temperature);
+        double delta = currentCost - _previousCost;
+        double acceptance = delta <= 0 ? 1 : 1.0 / std::exp(delta / (_temperature + 1));
         if(QRandomGenerator::global()->generateDouble() > acceptance)
         {
             _controller->undo();
@@ -371,6 +372,7 @@ void MainWindow::solve()
         else
         {
             _previousCost = _model->getCost();
+            _maxIterations = _model->getCost();
         }
 
         _controller->execute(VRCAction::random(_model->getSize(), true));
@@ -561,7 +563,7 @@ void MainWindow::updateController()
 void MainWindow::updateStatusBar()
 {
     QString cost("Cost: ");
-    cost.append(QVariant(_model->getCost()).toString());
+    cost.append(QString::number(_model->getCost(), 'g', 2));
     this->statusBar()->showMessage(cost + " Temperature: " + QString::number(_temperature, 'g', 2));
 
     if(_isSolving) {
